@@ -1,6 +1,5 @@
-import { Clock, Download, Sheet, Play, Square } from "lucide-react"
+import { Clock, Play, Square } from "lucide-react"
 import { formatClock } from "@/lib/formatters"
-import { exportToCsv } from "@/lib/exporters"
 import { useTimerStore } from "@/store/useTimerStore"
 import { useElapsed } from "@/hooks/useElapsed"
 import { Button } from "@/components/ui/button"
@@ -10,17 +9,15 @@ import { ModeToggle } from "@/components/mode-toggle"
 
 interface NavbarProps {
   onStartStop: () => void
-  onSync: () => void
 }
 
-export function Navbar({ onStartStop, onSync }: NavbarProps) {
+export function Navbar({ onStartStop }: NavbarProps) {
   const isRunning = useTimerStore((s) => s.timer.isRunning)
   const activeTask = useTimerStore((s) => s.timer.activeTask)
-  const records = useTimerStore((s) => s.records)
   const elapsed = useElapsed(activeTask?.startTime ?? null)
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-card">
       <div className="flex h-14 items-center gap-4 px-6">
         <div className="flex items-center gap-2">
           <div className="flex size-7 items-center justify-center rounded-md bg-primary">
@@ -69,18 +66,6 @@ export function Navbar({ onStartStop, onSync }: NavbarProps) {
                 Start
               </>
             )}
-          </Button>
-
-          <Separator orientation="vertical" className="h-5" />
-
-          <Button variant="outline" size="sm" onClick={() => exportToCsv(records)} className="gap-1.5">
-            <Download className="size-3.5" />
-            Export
-          </Button>
-
-          <Button variant="outline" size="sm" onClick={onSync} className="gap-1.5">
-            <Sheet className="size-3.5" />
-            Sync Sheets
           </Button>
 
           <Separator orientation="vertical" className="h-5" />
