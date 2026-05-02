@@ -14,52 +14,40 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
-import type { ActiveTask } from "@/types"
+import { formatClock, formatTime } from "@/lib/formatters"
+import { useTimerStore } from "@/store/useTimerStore"
+import { useElapsed } from "@/hooks/useElapsed"
 
 interface TaskFormModalProps {
   open: boolean
   mode: "start" | "stop"
-  activeTask: ActiveTask | null
-  onStart: (title: string, description: string) => void
-  onStop: (title: string, description: string) => void
+  onStart: (taskName: string, description: string) => void
+  onStop: (taskName: string, description: string) => void
   onCancel: () => void
 }
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
-}
+export function TaskFormModal({ open, mode, onStart, onStop, onCancel }: TaskFormModalProps) {
+  const activeTask = useTimerStore((s) => s.timer.activeTask)
+  const isStop = mode === "stop"
+  const elapsed = useElapsed(isStop && open ? activeTask?.startTime ?? null : null)
 
-function formatDuration(start: Date, now: Date): string {
-  const secs = Math.floor((now.getTime() - start.getTime()) / 1000)
-  const h = Math.floor(secs / 3600)
-  const m = Math.floor((secs % 3600) / 60)
-  const s = secs % 60
-  return [h, m, s].map((v) => String(v).padStart(2, "0")).join(":")
-}
-
-export function TaskFormModal({ open, mode, activeTask, onStart, onStop, onCancel }: TaskFormModalProps) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
-  const [now, setNow] = useState(new Date())
 
   useEffect(() => {
-    if (open) {
-      setNow(new Date())
-      if (mode === "stop" && activeTask) {
-        setTitle(activeTask.title)
-        setDescription(activeTask.description)
-      } else {
-        setTitle("")
-        setDescription("")
-      }
+    if (!open) return
+    if (isStop && activeTask) {
+      setTitle(activeTask.taskName)
+      setDescription(activeTask.description)
+    } else {
+      setTitle("")
+      setDescription("")
     }
-  }, [open, mode, activeTask])
+  }, [open, isStop, activeTask])
 
-  useEffect(() => {
-    if (!open || mode !== "stop") return
-    const id = setInterval(() => setNow(new Date()), 1000)
-    return () => clearInterval(id)
-  }, [open, mode])
+  const stoppingAt = activeTask
+    ? new Date(activeTask.startTime.getTime() + elapsed * 1000)
+    : new Date()
 
   const handleSubmit = () => {
     if (!title.trim()) return
@@ -69,8 +57,6 @@ export function TaskFormModal({ open, mode, activeTask, onStart, onStop, onCance
       onStop(title.trim(), description.trim())
     }
   }
-
-  const isStop = mode === "stop"
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onCancel() }}>
@@ -101,7 +87,6 @@ export function TaskFormModal({ open, mode, activeTask, onStart, onStop, onCance
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
-          {/* Time info in stop mode */}
           {isStop && activeTask && (
             <>
               <div className="rounded-lg border bg-muted/40 p-3">
@@ -109,7 +94,7 @@ export function TaskFormModal({ open, mode, activeTask, onStart, onStop, onCance
                   <Clock className="size-3.5 text-muted-foreground" />
                   <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Session Time</span>
                   <Badge variant="secondary" className="ml-auto font-mono text-xs">
-                    {formatDuration(activeTask.startTime, now)}
+                    {formatClock(elapsed)}
                   </Badge>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -119,7 +104,7 @@ export function TaskFormModal({ open, mode, activeTask, onStart, onStop, onCance
                   </div>
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs text-muted-foreground">Stopping at</span>
-                    <span className="text-sm font-medium font-mono">{formatTime(now)}</span>
+                    <span className="text-sm font-medium font-mono">{formatTime(stoppingAt)}</span>
                   </div>
                 </div>
               </div>
@@ -127,7 +112,6 @@ export function TaskFormModal({ open, mode, activeTask, onStart, onStop, onCance
             </>
           )}
 
-          {/* Title */}
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="task-title">Title <span className="text-destructive">*</span></Label>
             <Input
@@ -140,7 +124,6 @@ export function TaskFormModal({ open, mode, activeTask, onStart, onStop, onCance
             />
           </div>
 
-          {/* Description */}
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="task-desc">Description</Label>
             <Textarea
@@ -154,7 +137,7 @@ export function TaskFormModal({ open, mode, activeTask, onStart, onStop, onCance
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
