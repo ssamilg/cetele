@@ -1,14 +1,19 @@
-export interface WorkEntry {
+export interface TimeRecord {
   id: string
-  title: string
+  taskName: string
   description: string
   startTime: Date
   endTime: Date
-  duration: number // in seconds
+  duration: number
 }
 
 export interface ActiveTask {
-  title: string
+  taskName: string
   description: string
   startTime: Date
+}
+
+export interface TimerState {
+  isRunning: boolean
+  activeTask: ActiveTask | null
 }
