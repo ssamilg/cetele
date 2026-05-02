@@ -1,0 +1,18 @@
+---
+description: Global architectural and language standards for the Çetele SPA.
+globs: *.{ts,tsx}
+alwaysApply: true
+---
+# Core Architecture
+- Name: Çetele
+- Architecture: Pure Frontend Single Page Application (SPA)
+- Tech Stack: React, TypeScript, Vite, Tailwind CSS, shadcn/ui
+
+# TypeScript Standards
+- STRICT TYPING: No `any` types allowed under any circumstance.
+- All variables, parameters, return types, and component props must have explicit interfaces or types.
+- Ensure the `TimeRecord` interface (id, taskName, startTime, endTime, duration) is strictly applied across all features.
+
+# General Coding Standards
+- Prefer named exports over default exports for components and utility functions to ensure consistent IDE refactoring.
+- Keep functions pure where possible and components focused on a single responsibility.

@@ -1,0 +1,16 @@
+---
+description: UI boundaries, styling rules, and shadcn component usage.
+globs: src/components/**/*.tsx, src/pages/**/*.tsx
+alwaysApply: false
+---
+# Directory Structure Strictness
+- `src/components/ui/`: Strictly for CLI-generated shadcn primitives. Do NOT add custom feature components here.
+- `src/components/timer/`: Feature components related to time tracking (TimerInput, TimerDisplay).
+- `src/components/logs/`: Feature components related to data viewing (LogTable, ExportButton).
+
+# Styling Rules
+- Use Tailwind CSS exclusively for styling.
+- Do not create `.css` or `.scss` files for component-specific styles.
+- Merge dynamic Tailwind classes using the `cn` (clsx + twMerge) utility provided by shadcn.
+- Use functional React components exclusively.
+- Use local `useState` only for transient UI interactions (e.g., input field values before submission, modal visibility).

@@ -1,0 +1,12 @@
+---
+description: Rules for managing data persistence, IndexedDB, and Zustand state.
+globs: src/store/**/*.ts, src/lib/db.ts
+alwaysApply: false
+---
+# State & Data Rules
+- State Management Library: `Zustand`
+- Persistent Storage: `idb-keyval` (IndexedDB wrapper)
+- Zustand is the single source of truth for `TimeRecord` and `TimerState` data.
+- Do NOT use local `useState` for any data that belongs in the historical log or needs persistence.
+- The Zustand store must use the `persist` middleware paired with a custom `idb-keyval` storage engine for automated local storage synchronization.
+- Never mutate state directly; always use Zustand's set/produce patterns.
