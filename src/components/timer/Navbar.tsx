@@ -4,7 +4,6 @@ import { useTimerStore } from "@/store/useTimerStore"
 import { useElapsed } from "@/hooks/useElapsed"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
 import { ModeToggle } from "@/components/mode-toggle"
 
 interface NavbarProps {
@@ -18,37 +17,27 @@ export function Navbar({ onStartStop }: NavbarProps) {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card">
-      <div className="flex h-14 items-center gap-4 px-6">
-        <div className="flex items-center gap-2">
+      <div className="flex h-14 items-center px-6">
+        <div className="flex items-center gap-2 flex-1">
           <div className="flex size-7 items-center justify-center rounded-md bg-primary">
             <Clock className="size-4 text-primary-foreground" />
           </div>
           <span className="text-sm font-semibold tracking-tight">Çetele</span>
         </div>
 
-        <Separator orientation="vertical" className="h-5" />
-
-        <div className="flex items-center gap-3 flex-1">
-          {isRunning && activeTask && (
-            <div className="flex items-center gap-2 min-w-0">
-              <Badge variant="default" className="gap-1.5 shrink-0">
+        <div className="flex items-center gap-3">
+        {isRunning && activeTask && (
+            <div className="flex items-center gap-2">
+              <Badge variant="default" className="gap-1.5">
                 <span className="size-1.5 rounded-full bg-primary-foreground animate-pulse" />
-                Working on
+                <span className="max-w-48 truncate">{activeTask.taskName}</span>
               </Badge>
-              <span className="text-sm text-muted-foreground truncate max-w-48">{activeTask.taskName}</span>
+              <span className="font-mono text-sm font-medium tabular-nums">
+                {formatClock(elapsed)}
+              </span>
             </div>
           )}
-          {isRunning && (
-            <span className="font-mono text-sm font-medium tabular-nums">
-              {formatClock(elapsed)}
-            </span>
-          )}
-          {!isRunning && (
-            <span className="text-sm text-muted-foreground">No active task</span>
-          )}
-        </div>
 
-        <div className="flex items-center gap-2">
           <Button
             variant={isRunning ? "destructive" : "default"}
             size="sm"
@@ -67,9 +56,9 @@ export function Navbar({ onStartStop }: NavbarProps) {
               </>
             )}
           </Button>
+        </div>
 
-          <Separator orientation="vertical" className="h-5" />
-
+        <div className="flex items-center justify-end flex-1">
           <ModeToggle />
         </div>
       </div>
