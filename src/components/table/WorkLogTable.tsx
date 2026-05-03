@@ -75,18 +75,18 @@ export function WorkLogTable({ entries, onEdit, hourlyRate = 0 }: WorkLogTablePr
               onClick={() => onEdit(entry)}
             >
               <TableCell className="py-4">
-                <div className="flex items-center">
+                <div className="flex items-center gap-2">
                   <div className="flex size-2 shrink-0 rounded-full bg-primary/70" />
                   <span className="font-medium text-sm">{entry.taskName}</span>
                 </div>
               </TableCell>
               <TableCell className="py-4">
                 {entry.description ? (
-                  <span className="text-sm text-muted-foreground line-clamp-2 max-w-72">
+                  <span className="text-sm line-clamp-2 max-w-72">
                     {entry.description}
                   </span>
                 ) : (
-                  <span className="text-sm text-muted-foreground/50 flex items-center gap-1">
+                  <span className="text-sm text-muted-foreground/80 flex items-center gap-1">
                     <FileText className="size-3" />
                     {t("table.no_description")}
                   </span>
