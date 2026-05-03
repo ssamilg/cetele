@@ -6,7 +6,7 @@ alwaysApply: false
 # Directory Structure Strictness
 - `src/components/ui/`: Strictly for CLI-generated shadcn primitives. Do NOT add custom feature components here.
 - `src/components/timer/`: Feature components related to time tracking (TimerInput, TimerDisplay).
-- `src/components/logs/`: Feature components related to data viewing (LogTable, ExportButton).
+- `src/components/table/`: Feature components related to data viewing (LogTable, ExportButton).
 
 # Styling Rules
 - Use Tailwind CSS exclusively for styling.
