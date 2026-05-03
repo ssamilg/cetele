@@ -1,5 +1,5 @@
 import type { TimeRecord } from "@/types"
-import { formatDateTime, formatDuration } from "@/lib/formatters"
+import { formatDuration, formatSessionDateRange, formatTimeShort } from "@/lib/formatters"
 import type { Currency } from "@/store/useTimerStore"
 import { CURRENCY_LABELS, CURRENCY_SYMBOLS } from "@/store/useTimerStore"
 
@@ -12,7 +12,7 @@ export class GoogleSheetsError extends Error {
   }
 }
 
-const BASE_HEADERS = ["Task", "Description", "Started", "Stopped", "Duration"]
+const BASE_HEADERS = ["Task", "Description", "Date", "Started", "Stopped", "Duration"]
 
 function buildRows(records: TimeRecord[], hourlyRate: number, currency: Currency): string[][] {
   const hasRate = hourlyRate > 0
@@ -23,8 +23,9 @@ function buildRows(records: TimeRecord[], hourlyRate: number, currency: Currency
     return [
       r.taskName,
       r.description || "No description",
-      formatDateTime(r.startTime),
-      formatDateTime(r.endTime),
+      formatSessionDateRange(r.startTime, r.endTime),
+      formatTimeShort(r.startTime),
+      formatTimeShort(r.endTime),
       formatDuration(r.duration),
       ...(hasRate ? [earned!] : []),
     ]

@@ -35,6 +35,7 @@
   "table": {
     "col_task": "Görev",
     "col_description": "Açıklama",
+    "col_date": "Tarih",
     "col_started": "Başlangıç",
     "col_stopped": "Bitiş",
     "col_duration": "Süre",

@@ -35,6 +35,7 @@
   "table": {
     "col_task": "Task",
     "col_description": "Description",
+    "col_date": "Date",
     "col_started": "Started",
     "col_stopped": "Stopped",
     "col_duration": "Duration",
