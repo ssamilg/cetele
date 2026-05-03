@@ -24,6 +24,7 @@ type PersistedState = TimerStoreState & Pick<SyncStoreState, "spreadsheetId"> & 
 interface TimerStoreActions {
   startTimer: (taskName: string, description: string) => void
   stopTimer: (taskName: string, description: string) => void
+  addEntry: (entry: TimeRecord) => void
   updateEntry: (entry: TimeRecord) => void
   deleteEntry: (id: string) => void
   setGoogleAccessToken: (token: string | null) => void
@@ -72,6 +73,19 @@ export const useTimerStore = create<TimerStore>()(
         const updatedRecords = [...state.records, entry]
         set({ records: updatedRecords, timer: initialTimer })
 
+        if (state.googleAccessToken && state.spreadsheetId) {
+          syncLogsToSheet(
+            updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate,
+          ).catch(() => {
+            toast.error("Background sync failed, but local data is safe")
+          })
+        }
+      },
+
+      addEntry: (entry) => {
+        const state = get()
+        const updatedRecords = [...state.records, entry]
+        set({ records: updatedRecords })
         if (state.googleAccessToken && state.spreadsheetId) {
           syncLogsToSheet(
             updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate,

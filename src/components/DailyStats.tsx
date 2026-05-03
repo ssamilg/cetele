@@ -2,6 +2,7 @@ import { Clock, ListChecks, DollarSign } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { formatDuration } from "@/lib/formatters"
 import { useTimerStore } from "@/store/useTimerStore"
+import { cn } from "@/lib/utils"
 
 function isToday(date: Date): boolean {
   const now = new Date()
@@ -55,7 +56,7 @@ export function DailyStats() {
   const taskCount = todayRecords.length
 
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className={cn("grid grid-cols-3 gap-4", hourlyRate > 0 ? "grid-cols-3" : "grid-cols-2")}>
       <StatCard
         icon={<Clock className="size-5" />}
         label="Hours Today"
@@ -66,14 +67,16 @@ export function DailyStats() {
         icon={<ListChecks className="size-5" />}
         label="Tasks Today"
         value={taskCount > 0 ? String(taskCount) : "—"}
-        iconClassName="bg-violet-500/10 text-violet-500"
+        iconClassName="bg-blue-500/10 text-blue-500"
       />
+      {hourlyRate > 0 && (
       <StatCard
         icon={<DollarSign className="size-5" />}
         label="Earned Today"
         value={hourlyRate > 0 && totalSeconds > 0 ? formatEarnedToday(totalSeconds, hourlyRate) : "—"}
-        iconClassName="bg-green-500/10 text-green-500"
-      />
+          iconClassName="bg-green-500/10 text-green-500"
+        />
+      )}
     </div>
   )
 }

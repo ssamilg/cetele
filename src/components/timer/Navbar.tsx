@@ -1,4 +1,4 @@
-import { Clock, Play, Square } from "lucide-react"
+import { Clock, Play, Square, TimerIcon } from "lucide-react"
 import { formatClock } from "@/lib/formatters"
 import { useTimerStore } from "@/store/useTimerStore"
 import { useElapsed } from "@/hooks/useElapsed"
@@ -8,9 +8,10 @@ import { ModeToggle } from "@/components/mode-toggle"
 
 interface NavbarProps {
   onStartStop: () => void
+  onManualEntry: () => void
 }
 
-export function Navbar({ onStartStop }: NavbarProps) {
+export function Navbar({ onStartStop, onManualEntry }: NavbarProps) {
   const isRunning = useTimerStore((s) => s.timer.isRunning)
   const activeTask = useTimerStore((s) => s.timer.activeTask)
   const elapsed = useElapsed(activeTask?.startTime ?? null)
@@ -55,6 +56,16 @@ export function Navbar({ onStartStop }: NavbarProps) {
                 Start
               </>
             )}
+          </Button>
+          <Button
+            variant="outline"
+            className="ring-1 ring-primary"
+            size="sm"
+            onClick={onManualEntry}
+            aria-label="Log time manually"
+          >
+            <TimerIcon className="size-4" />
+            +
           </Button>
         </div>
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Play, Pencil, Trash2, Clock } from "lucide-react"
+import { Play, Pencil, Trash2, Clock, TimerIcon } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -29,7 +29,7 @@ import type { TimeRecord } from "@/types"
 
 interface TaskFormModalProps {
   open: boolean
-  mode: "start" | "edit"
+  mode: "start" | "edit" | "manual"
   entry?: TimeRecord | null
   onStart?: (taskName: string, description: string) => void
   onSave?: (entry: TimeRecord) => void
@@ -69,6 +69,8 @@ export function TaskFormModal({
   onCancel,
 }: TaskFormModalProps) {
   const isEdit = mode === "edit"
+  const isManual = mode === "manual"
+  const isEditLike = isEdit || isManual
 
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -88,16 +90,25 @@ export function TaskFormModal({
       setEndDateInput(toDateInputValue(entry.endTime))
       setEndTimeInput(toTimeInputValue(entry.endTime))
       setDeleteConfirm(false)
+    } else if (isManual) {
+      setTitle("")
+      setDescription("")
+      const now = new Date()
+      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
+      setStartDateInput(toDateInputValue(oneHourAgo))
+      setStartTimeInput(toTimeInputValue(oneHourAgo))
+      setEndDateInput(toDateInputValue(now))
+      setEndTimeInput(toTimeInputValue(now))
     } else {
       setTitle("")
       setDescription("")
     }
-  }, [open, isEdit, entry])
+  }, [open, isEdit, isManual, entry])
 
-  const editedStartTime = isEdit ? combineDateTime(startDateInput, startTimeInput) : null
-  const editedEndTime = isEdit ? combineDateTime(endDateInput, endTimeInput) : null
+  const editedStartTime = isEditLike ? combineDateTime(startDateInput, startTimeInput) : null
+  const editedEndTime = isEditLike ? combineDateTime(endDateInput, endTimeInput) : null
   const isTimeValid =
-    !isEdit ||
+    !isEditLike ||
     (editedStartTime !== null &&
       editedEndTime !== null &&
       editedEndTime.getTime() > editedStartTime.getTime())
@@ -105,6 +116,7 @@ export function TaskFormModal({
     editedStartTime && editedEndTime
       ? Math.max(0, Math.floor((editedEndTime.getTime() - editedStartTime.getTime()) / 1000))
       : 0
+
 
   const applyQuickSpan = (minutes: number) => {
     const start = combineDateTime(startDateInput, startTimeInput)
@@ -116,11 +128,20 @@ export function TaskFormModal({
 
   const handleSubmit = () => {
     if (!title.trim() || !isTimeValid) return
-    if (!isEdit) {
+    if (mode === "start") {
       onStart?.(title.trim(), description.trim())
-    } else if (entry && editedStartTime && editedEndTime) {
+    } else if (isEdit && entry && editedStartTime && editedEndTime) {
       onSave?.({
         ...entry,
+        taskName: title.trim(),
+        description: description.trim(),
+        startTime: editedStartTime,
+        endTime: editedEndTime,
+        duration: editedDuration,
+      })
+    } else if (isManual && editedStartTime && editedEndTime) {
+      onSave?.({
+        id: crypto.randomUUID(),
         taskName: title.trim(),
         description: description.trim(),
         startTime: editedStartTime,
@@ -141,14 +162,23 @@ export function TaskFormModal({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {isEdit ? (
+              {isEdit && (
                 <>
                   <div className="flex size-7 items-center justify-center rounded-md bg-primary/10">
                     <Pencil className="size-4 text-primary" />
                   </div>
                   Edit Entry
                 </>
-              ) : (
+              )}
+              {isManual && (
+                <>
+                  <div className="flex size-7 items-center justify-center rounded-md bg-primary/10">
+                    <TimerIcon className="size-4 text-primary" />
+                  </div>
+                  Log Time Manually
+                </>
+              )}
+              {mode === "start" && (
                 <>
                   <div className="flex size-7 items-center justify-center rounded-md bg-primary/10">
                     <Play className="size-4 text-primary fill-primary" />
@@ -158,14 +188,14 @@ export function TaskFormModal({
               )}
             </DialogTitle>
             <DialogDescription>
-              {isEdit
-                ? "Modify the task details for this time entry."
-                : "Enter the task details to begin tracking your time."}
+              {isEdit && "Modify the task details for this time entry."}
+              {isManual && "Add a completed time entry with custom start and end times."}
+              {mode === "start" && "Enter the task details to begin tracking your time."}
             </DialogDescription>
           </DialogHeader>
 
           <div className="flex flex-col gap-4">
-            {isEdit && (
+            {isEditLike && (
               <>
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-col gap-1.5">
@@ -284,12 +314,19 @@ export function TaskFormModal({
               disabled={!title.trim() || !isTimeValid}
               className="gap-1.5"
             >
-              {isEdit ? (
+              {isEdit && (
                 <>
                   <Pencil className="size-3.5" />
                   Save Changes
                 </>
-              ) : (
+              )}
+              {isManual && (
+                <>
+                  <TimerIcon className="size-3.5" />
+                  Log Entry
+                </>
+              )}
+              {mode === "start" && (
                 <>
                   <Play className="size-3.5 fill-current" />
                   Start Timer

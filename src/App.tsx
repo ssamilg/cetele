@@ -18,12 +18,14 @@ export function App() {
   const activeTask = useTimerStore((s) => s.timer.activeTask)
   const startTimer = useTimerStore((s) => s.startTimer)
   const stopTimer = useTimerStore((s) => s.stopTimer)
+  const addEntry = useTimerStore((s) => s.addEntry)
   const updateEntry = useTimerStore((s) => s.updateEntry)
   const deleteEntry = useTimerStore((s) => s.deleteEntry)
   const hourlyRate = useTimerStore((s) => s.hourlyRate)
   const setHourlyRate = useTimerStore((s) => s.setHourlyRate)
 
   const [taskModalOpen, setTaskModalOpen] = useState(false)
+  const [manualModalOpen, setManualModalOpen] = useState(false)
   const [googleModalOpen, setGoogleModalOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<TimeRecord | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
@@ -58,9 +60,14 @@ export function App() {
     setEditingEntry(null)
   }
 
+  const handleSaveManualEntry = (entry: TimeRecord) => {
+    addEntry(entry)
+    setManualModalOpen(false)
+  }
+
   return (
     <div className="min-h-svh bg-background flex flex-col">
-      <Navbar onStartStop={handleStartStopClick} />
+      <Navbar onStartStop={handleStartStopClick} onManualEntry={() => setManualModalOpen(true)} />
 
       <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-8 flex flex-col">
         <div className="flex flex-col gap-6 flex-1">
@@ -131,6 +138,13 @@ export function App() {
         mode="start"
         onStart={handleStart}
         onCancel={() => setTaskModalOpen(false)}
+      />
+
+      <TaskFormModal
+        open={manualModalOpen}
+        mode="manual"
+        onSave={handleSaveManualEntry}
+        onCancel={() => setManualModalOpen(false)}
       />
 
       <GoogleOAuthModal
