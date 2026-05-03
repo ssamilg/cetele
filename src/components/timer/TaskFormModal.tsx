@@ -37,15 +37,26 @@ interface TaskFormModalProps {
   onCancel: () => void
 }
 
-function toTimeInputValue(date: Date): string {
-  return date.toTimeString().slice(0, 5)
+const QUICK_SPANS = [
+  { label: "5 min", minutes: 5 },
+  { label: "15 min", minutes: 15 },
+  { label: "30 min", minutes: 30 },
+  { label: "1 hr", minutes: 60 },
+]
+
+function toDateInputValue(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
-function applyTimeToDate(original: Date, timeInput: string): Date {
-  const [hours, minutes] = timeInput.split(":").map(Number)
-  const result = new Date(original)
-  result.setHours(hours, minutes, 0, 0)
-  return result
+function toTimeInputValue(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+function combineDateTime(dateStr: string, timeStr: string): Date | null {
+  if (!dateStr || !timeStr) return null
+  return new Date(`${dateStr}T${timeStr}`)
 }
 
 export function TaskFormModal({
@@ -61,7 +72,9 @@ export function TaskFormModal({
 
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
+  const [startDateInput, setStartDateInput] = useState("")
   const [startTimeInput, setStartTimeInput] = useState("")
+  const [endDateInput, setEndDateInput] = useState("")
   const [endTimeInput, setEndTimeInput] = useState("")
   const [deleteConfirm, setDeleteConfirm] = useState(false)
 
@@ -70,7 +83,9 @@ export function TaskFormModal({
     if (isEdit && entry) {
       setTitle(entry.taskName)
       setDescription(entry.description)
+      setStartDateInput(toDateInputValue(entry.startTime))
       setStartTimeInput(toTimeInputValue(entry.startTime))
+      setEndDateInput(toDateInputValue(entry.endTime))
       setEndTimeInput(toTimeInputValue(entry.endTime))
       setDeleteConfirm(false)
     } else {
@@ -79,10 +94,8 @@ export function TaskFormModal({
     }
   }, [open, isEdit, entry])
 
-  const editedStartTime =
-    isEdit && entry && startTimeInput ? applyTimeToDate(entry.startTime, startTimeInput) : null
-  const editedEndTime =
-    isEdit && entry && endTimeInput ? applyTimeToDate(entry.endTime, endTimeInput) : null
+  const editedStartTime = isEdit ? combineDateTime(startDateInput, startTimeInput) : null
+  const editedEndTime = isEdit ? combineDateTime(endDateInput, endTimeInput) : null
   const isTimeValid =
     !isEdit ||
     (editedStartTime !== null &&
@@ -92,6 +105,14 @@ export function TaskFormModal({
     editedStartTime && editedEndTime
       ? Math.max(0, Math.floor((editedEndTime.getTime() - editedStartTime.getTime()) / 1000))
       : 0
+
+  const applyQuickSpan = (minutes: number) => {
+    const start = combineDateTime(startDateInput, startTimeInput)
+    if (!start) return
+    const end = new Date(start.getTime() + minutes * 60 * 1000)
+    setEndDateInput(toDateInputValue(end))
+    setEndTimeInput(toTimeInputValue(end))
+  }
 
   const handleSubmit = () => {
     if (!title.trim() || !isTimeValid) return
@@ -146,40 +167,74 @@ export function TaskFormModal({
           <div className="flex flex-col gap-4">
             {isEdit && (
               <>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-3">
                   <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="edit-start">Start Time</Label>
-                    <Input
-                      id="edit-start"
-                      type="time"
-                      value={startTimeInput}
-                      onChange={(e) => setStartTimeInput(e.target.value)}
-                    />
+                    <Label>Started</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="date"
+                        value={startDateInput}
+                        onChange={(e) => setStartDateInput(e.target.value)}
+                        className="flex-1 dark:[color-scheme:dark]"
+                      />
+                      <Input
+                        type="time"
+                        value={startTimeInput}
+                        onChange={(e) => setStartTimeInput(e.target.value)}
+                        className="w-28 dark:[color-scheme:dark]"
+                      />
+                    </div>
                   </div>
+
                   <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="edit-end">End Time</Label>
-                    <Input
-                      id="edit-end"
-                      type="time"
-                      value={endTimeInput}
-                      onChange={(e) => setEndTimeInput(e.target.value)}
-                    />
+                    <div className="grid grid-cols-4 gap-2">
+                      {QUICK_SPANS.map(({ label, minutes }) => (
+                        <Button
+                          key={minutes}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => applyQuickSpan(minutes)}
+                          className="w-full"
+                        >
+                          {label}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <Label>Stopped</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="date"
+                        value={endDateInput}
+                        onChange={(e) => setEndDateInput(e.target.value)}
+                        className="flex-1 dark:[color-scheme:dark]"
+                      />
+                      <Input
+                        type="time"
+                        value={endTimeInput}
+                        onChange={(e) => setEndTimeInput(e.target.value)}
+                        className="w-28 dark:[color-scheme:dark]"
+                      />
+                    </div>
+                  </div>
+
+                  {isTimeValid && editedDuration > 0 && (
+                    <div className="flex items-center gap-2">
+                      <Clock className="size-3.5 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">Duration</span>
+                      <Badge variant="secondary" className="ml-auto font-mono text-xs">
+                        {formatDuration(editedDuration)}
+                      </Badge>
+                    </div>
+                  )}
+
+                  {!isTimeValid && startDateInput && endDateInput && (
+                    <p className="text-xs text-destructive">End time must be after start time.</p>
+                  )}
                 </div>
-
-                {isTimeValid && editedDuration > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Clock className="size-3.5 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">Duration</span>
-                    <Badge variant="secondary" className="ml-auto font-mono text-xs">
-                      {formatDuration(editedDuration)}
-                    </Badge>
-                  </div>
-                )}
-
-                {!isTimeValid && startTimeInput && endTimeInput && (
-                  <p className="text-xs text-destructive">End time must be after start time.</p>
-                )}
 
                 <Separator />
               </>

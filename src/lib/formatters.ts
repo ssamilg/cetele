@@ -14,6 +14,14 @@ export function formatDateLong(date: Date): string {
   return date.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })
 }
 
+export function formatDateTime(date: Date): string {
+  return (
+    date.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" }) +
+    " " +
+    date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  )
+}
+
 export function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600)
   const m = Math.floor((seconds % 3600) / 60)

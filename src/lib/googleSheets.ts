@@ -1,5 +1,5 @@
 import type { TimeRecord } from "@/types"
-import { formatDuration, formatTime } from "@/lib/formatters"
+import { formatDateTime, formatDuration } from "@/lib/formatters"
 
 const HEADERS = ["Task", "Description", "Started", "Stopped", "Duration"]
 
@@ -7,8 +7,8 @@ function buildRows(records: TimeRecord[]): string[][] {
   return records.map((r) => [
     r.taskName,
     r.description || "No description",
-    formatTime(r.startTime),
-    formatTime(r.endTime),
+    formatDateTime(r.startTime),
+    formatDateTime(r.endTime),
     formatDuration(r.duration),
   ])
 }
