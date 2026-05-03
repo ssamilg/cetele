@@ -2,67 +2,52 @@ import { Play, Square, TimerIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import logo from "@/assets/logo.webp"
 import { formatClock } from "@/lib/formatters"
-import { useTimerStore, CURRENCY_LABELS, CURRENCY_SYMBOLS } from "@/store/useTimerStore"
-import type { Currency } from "@/store/useTimerStore"
+import { useTimerStore } from "@/store/useTimerStore"
 import { useElapsed } from "@/hooks/useElapsed"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ModeToggle } from "@/components/mode-toggle"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { NavbarSettingsMenu } from "@/components/timer/NavbarSettingsMenu"
 
 interface NavbarProps {
   onStartStop: () => void
   onManualEntry: () => void
 }
 
-const CURRENCIES: Currency[] = ["USD", "EUR", "TRY"]
-
 export function Navbar({ onStartStop, onManualEntry }: NavbarProps) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const isRunning = useTimerStore((s) => s.timer.isRunning)
   const activeTask = useTimerStore((s) => s.timer.activeTask)
-  const currency = useTimerStore((s) => s.currency)
-  const setCurrency = useTimerStore((s) => s.setCurrency)
   const elapsed = useElapsed(activeTask?.startTime ?? null)
 
-  const activeLang = i18n.language.startsWith("tr") ? "tr" : "en"
-
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-card">
-      <div className="flex h-14 items-center px-6">
-        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+    <header className="sticky top-0 z-50 w-full min-w-0 border-b border-border bg-card">
+      <div className="flex h-14 min-h-14 min-w-0 items-center gap-2 px-3 md:gap-4 md:px-6">
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">
           <img
             src={logo}
             alt=""
             className="min-h-10 h-10 w-auto max-h-10 object-contain shrink-0"
           />
-          <span className="text-xl font-semibold tracking-tight">Çetele</span>
+          <span className="truncate text-xl font-semibold tracking-tight">Çetele</span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center justify-center gap-1.5 md:gap-2">
           {isRunning && activeTask && (
-            <div className="flex items-center gap-2">
-              <Badge variant="default" className="gap-1.5">
-                <span className="size-1.5 rounded-full bg-primary-foreground animate-pulse" />
-                <span className="max-w-48 truncate">{activeTask.taskName}</span>
+            <div className="flex max-w-[min(50vw,14rem)] min-w-0 items-center gap-1.5 md:max-w-56">
+              <Badge variant="default" className="min-w-0 max-w-full gap-1.5">
+                <span className="size-1.5 shrink-0 rounded-full bg-primary-foreground animate-pulse" />
+                <span className="min-w-0 truncate">{activeTask.taskName}</span>
               </Badge>
-              <span className="font-mono text-sm font-medium tabular-nums">
+              <span className="font-mono text-sm font-medium tabular-nums shrink-0">
                 {formatClock(elapsed)}
               </span>
             </div>
           )}
-
           <Button
             variant={isRunning ? "destructive" : "default"}
             size="sm"
             onClick={onStartStop}
-            className="gap-1.5"
+            className="shrink-0 gap-1.5"
           >
             {isRunning ? (
               <>
@@ -78,7 +63,7 @@ export function Navbar({ onStartStop, onManualEntry }: NavbarProps) {
           </Button>
           <Button
             variant="outline"
-            className="ring-1 ring-primary"
+            className="shrink-0 ring-1 ring-primary"
             onClick={onManualEntry}
             aria-label={t("nav.manual_entry_aria")}
           >
@@ -86,34 +71,8 @@ export function Navbar({ onStartStop, onManualEntry }: NavbarProps) {
           </Button>
         </div>
 
-        <div className="flex items-center justify-end gap-2 flex-1">
-          <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
-            <SelectTrigger className="h-8 w-28 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {CURRENCIES.map((c) => (
-                <SelectItem key={c} value={c} className="text-xs">
-                  <span className="flex items-center gap-1.5">
-                    <span className="font-medium">{CURRENCY_SYMBOLS[c]}</span>
-                    {CURRENCY_LABELS[c]}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => i18n.changeLanguage(activeLang === "en" ? "tr" : "en")}
-            aria-label="Toggle language"
-            className="w-9 text-xs font-semibold"
-          >
-            {activeLang.toUpperCase()}
-          </Button>
-
-          <ModeToggle />
+        <div className="flex min-w-0 flex-1 items-center justify-end">
+          <NavbarSettingsMenu />
         </div>
       </div>
     </header>

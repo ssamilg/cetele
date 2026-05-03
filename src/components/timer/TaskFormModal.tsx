@@ -162,7 +162,7 @@ export function TaskFormModal({
   return (
     <>
       <Dialog open={open && !deleteConfirm} onOpenChange={(o) => { if (!o) onCancel() }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="md:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {isEdit && (

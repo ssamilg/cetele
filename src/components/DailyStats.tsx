@@ -60,7 +60,12 @@ export function DailyStats() {
   const taskCount = todayRecords.length
 
   return (
-    <div className={cn("grid grid-cols-3 gap-4", hourlyRate > 0 ? "grid-cols-3" : "grid-cols-2")}>
+    <div
+      className={cn(
+        "grid grid-cols-1 gap-4 md:grid-cols-3",
+        hourlyRate === 0 && "md:grid-cols-2",
+      )}
+    >
       <StatCard
         icon={<Clock className="size-5" />}
         label={t("stats.hours_today")}

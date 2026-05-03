@@ -18,6 +18,16 @@
     "stop": "Durdur",
     "manual_entry_aria": "Manuel zaman girişi ekle"
   },
+  "settings": {
+    "aria": "Ayarlar",
+    "currency": "Para birimi",
+    "language": "Dil",
+    "theme": "Görünüm",
+    "theme_light": "Açık",
+    "theme_dark": "Koyu",
+    "lang_en": "English",
+    "lang_tr": "Türkçe"
+  },
   "app": {
     "title": "Zaman Günlüğü",
     "description": "Çalışma oturumlarınızı takip edin ve inceleyin.",

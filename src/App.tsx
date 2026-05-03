@@ -93,14 +93,14 @@ export function App() {
         >
       <Navbar onStartStop={handleStartStopClick} onManualEntry={() => setManualModalOpen(true)} />
 
-      <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-8 pb-16 flex flex-col">
-        <div className="flex flex-col gap-6 flex-1">
-          <div className="flex items-end justify-between">
-            <div className="flex flex-col gap-1">
-              <h1 className="text-2xl font-semibold tracking-tight">{t("app.title")}</h1>
+      <main className="mx-auto flex w-full min-w-0 max-w-6xl flex-1 flex-col px-4 py-6 pb-16 md:px-6 md:py-8">
+        <div className="flex flex-1 flex-col gap-6">
+          <div className="flex min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="min-w-0 flex flex-col gap-1">
+              <h1 className="text-xl font-semibold tracking-tight md:text-2xl">{t("app.title")}</h1>
               <p className="text-sm text-muted-foreground">{t("app.description")}</p>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex min-w-0 flex-wrap items-center gap-2 md:shrink-0">
               <div className="flex items-center rounded-md border border-border overflow-hidden h-8 text-sm bg-background">
                 <span className="px-2.5 text-muted-foreground border-r border-border h-full flex items-center select-none">
                   {CURRENCY_SYMBOLS[currency]}
@@ -183,7 +183,7 @@ export function App() {
         onCancel={() => { setEditModalOpen(false); setEditingEntry(null) }}
       />
 
-        <footer className="fixed bottom-0 inset-x-0 h-9 border-t border-border bg-card flex items-center px-6">
+        <footer className="fixed bottom-0 inset-x-0 z-40 flex h-9 items-center border-t border-border bg-card px-3 md:px-6">
           <span className="flex-1 text-xs text-muted-foreground">v1.0</span>
           <span className="text-xs text-muted-foreground">
             {t("app.footer_made_by")}{" "}

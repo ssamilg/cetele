@@ -113,7 +113,7 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="md:max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="flex size-7 items-center justify-center rounded-md bg-muted">
