@@ -1,4 +1,5 @@
 import { Clock, Play, Square, TimerIcon } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { formatClock } from "@/lib/formatters"
 import { useTimerStore, CURRENCY_LABELS, CURRENCY_SYMBOLS } from "@/store/useTimerStore"
 import type { Currency } from "@/store/useTimerStore"
@@ -22,11 +23,14 @@ interface NavbarProps {
 const CURRENCIES: Currency[] = ["USD", "EUR", "TRY"]
 
 export function Navbar({ onStartStop, onManualEntry }: NavbarProps) {
+  const { t, i18n } = useTranslation()
   const isRunning = useTimerStore((s) => s.timer.isRunning)
   const activeTask = useTimerStore((s) => s.timer.activeTask)
   const currency = useTimerStore((s) => s.currency)
   const setCurrency = useTimerStore((s) => s.setCurrency)
   const elapsed = useElapsed(activeTask?.startTime ?? null)
+
+  const activeLang = i18n.language.startsWith("tr") ? "tr" : "en"
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card">
@@ -39,7 +43,7 @@ export function Navbar({ onStartStop, onManualEntry }: NavbarProps) {
         </div>
 
         <div className="flex items-center gap-3">
-        {isRunning && activeTask && (
+          {isRunning && activeTask && (
             <div className="flex items-center gap-2">
               <Badge variant="default" className="gap-1.5">
                 <span className="size-1.5 rounded-full bg-primary-foreground animate-pulse" />
@@ -52,6 +56,14 @@ export function Navbar({ onStartStop, onManualEntry }: NavbarProps) {
           )}
 
           <Button
+            variant="ghost"
+            size="icon"
+            onClick={onManualEntry}
+            aria-label={t("nav.manual_entry_aria")}
+          >
+            <TimerIcon className="size-4" />
+          </Button>
+          <Button
             variant={isRunning ? "destructive" : "default"}
             size="sm"
             onClick={onStartStop}
@@ -60,28 +72,28 @@ export function Navbar({ onStartStop, onManualEntry }: NavbarProps) {
             {isRunning ? (
               <>
                 <Square className="size-3.5 fill-current" />
-                Stop
+                {t("nav.stop")}
               </>
             ) : (
               <>
                 <Play className="size-3.5 fill-current" />
-                Start
+                {t("nav.start")}
               </>
             )}
-          </Button>
-          <Button
-            variant="outline"
-            className="ring-1 ring-primary"
-            size="sm"
-            onClick={onManualEntry}
-            aria-label="Log time manually"
-          >
-            <TimerIcon className="size-4" />
-            +
           </Button>
         </div>
 
         <div className="flex items-center justify-end gap-2 flex-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => i18n.changeLanguage(activeLang === "en" ? "tr" : "en")}
+            aria-label="Toggle language"
+            className="w-9 text-xs font-semibold"
+          >
+            {activeLang.toUpperCase()}
+          </Button>
+
           <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
             <SelectTrigger className="h-8 w-28 text-xs">
               <SelectValue />
@@ -97,6 +109,7 @@ export function Navbar({ onStartStop, onManualEntry }: NavbarProps) {
               ))}
             </SelectContent>
           </Select>
+
           <ModeToggle />
         </div>
       </div>

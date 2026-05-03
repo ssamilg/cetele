@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { toast } from "sonner"
+import i18n from "@/i18n"
 import { createIdbStorage } from "@/lib/db"
 import { syncLogsToSheet, GoogleSheetsError } from "@/lib/googleSheets"
 import type { ActiveTask, TimeRecord, TimerState } from "@/types"
@@ -55,16 +56,14 @@ export const useTimerStore = create<TimerStore>()(
       const disconnectGoogle = () => {
         sessionStorage.removeItem("cetele-google-token")
         set({ googleAccessToken: null })
-        toast.error("Google session expired — please reconnect to resume syncing.", {
-          duration: 6000,
-        })
+        toast.error(i18n.t("toast.sync_expired"), { duration: 6000 })
       }
 
       const handleSyncError = (err: unknown) => {
         if (isClientError(err)) {
           disconnectGoogle()
         } else {
-          toast.error("Background sync failed, but local data is safe")
+          toast.error(i18n.t("toast.sync_background_failed"))
         }
       }
 
@@ -165,7 +164,7 @@ export const useTimerStore = create<TimerStore>()(
     {
       name: "cetele-store",
       storage: createIdbStorage<PersistedState>(() => {
-        toast.error("Failed to save time record locally")
+        toast.error(i18n.t("toast.save_failed"))
       }),
         partialize: (state): PersistedState => ({
         records: state.records,

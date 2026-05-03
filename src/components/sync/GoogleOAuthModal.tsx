@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useGoogleLogin } from "@react-oauth/google"
+import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { Sheet, CheckCircle2, Unlink, AlertCircle, RefreshCw, Loader2, ExternalLink } from "lucide-react"
 import { createCeteleSheet, syncLogsToSheet, GoogleSheetsError } from "@/lib/googleSheets"
@@ -22,14 +23,8 @@ interface GoogleOAuthModalProps {
   onClose: () => void
 }
 
-const SETUP_LABELS: Record<SetupStatus, string> = {
-  "idle": "",
-  "creating-sheet": "Creating your spreadsheet…",
-  "initial-sync": "Syncing your records…",
-  "error": "Something went wrong. Please try again.",
-}
-
 export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
+  const { t } = useTranslation()
   const records = useTimerStore((s) => s.records)
   const googleAccessToken = useTimerStore((s) => s.googleAccessToken)
   const spreadsheetId = useTimerStore((s) => s.spreadsheetId)
@@ -64,11 +59,11 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
       }
 
       setSetupStatus("idle")
-      toast.success("Successfully connected to Google")
+      toast.success(t("toast.google_connected"))
     } catch {
       setSetupStatus("error")
       setGoogleAccessToken(null)
-      toast.error("Failed to connect to Google")
+      toast.error(t("toast.google_connect_failed"))
     }
   }
 
@@ -79,7 +74,7 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
     },
     onError: () => {
       setLoginError(true)
-      toast.error("Failed to connect to Google")
+      toast.error(t("toast.google_connect_failed"))
     },
   })
 
@@ -94,14 +89,14 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
     try {
       await syncLogsToSheet(records, googleAccessToken, spreadsheetId, hourlyRate, currency)
       setSyncStatus("success")
-      toast.success("Spreadsheet synced successfully")
+      toast.success(t("toast.sync_success"))
     } catch (err) {
       setSyncStatus("error")
       if (err instanceof GoogleSheetsError && err.status >= 400 && err.status < 500) {
         setGoogleAccessToken(null)
-        toast.error("Google session expired — please reconnect.", { duration: 6000 })
+        toast.error(t("toast.sync_expired_reconnect"), { duration: 6000 })
       } else {
-        toast.error("Failed to sync with Google Sheets")
+        toast.error(t("toast.sync_failed"))
       }
     }
   }
@@ -124,19 +119,19 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
             <div className="flex size-7 items-center justify-center rounded-md bg-muted">
               <Sheet className="size-4 text-foreground" />
             </div>
-            Sync to Google Sheets
+            {t("sync.title")}
           </DialogTitle>
           <DialogDescription>
-            {isConnected
-              ? "Your time logs are automatically synced after every session."
-              : "Connect your Google account to back up your time logs to a private spreadsheet."}
+            {isConnected ? t("sync.desc_connected") : t("sync.desc_disconnected")}
           </DialogDescription>
         </DialogHeader>
 
         {isSettingUp && (
           <div className="flex flex-col items-center gap-3 py-6">
             <Loader2 className="size-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">{SETUP_LABELS[setupStatus]}</p>
+            <p className="text-sm text-muted-foreground">
+              {setupStatus === "creating-sheet" ? t("sync.creating_sheet") : t("sync.initial_sync")}
+            </p>
           </div>
         )}
 
@@ -145,13 +140,13 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
             <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10">
               <AlertCircle className="size-6 text-destructive" />
             </div>
-            <p className="text-sm text-center text-muted-foreground">{SETUP_LABELS["error"]}</p>
+            <p className="text-sm text-center text-muted-foreground">{t("sync.error")}</p>
             <Button
               variant="outline"
               size="sm"
               onClick={() => { setSetupStatus("idle"); setLoginError(false) }}
             >
-              Try again
+              {t("sync.try_again")}
             </Button>
           </div>
         )}
@@ -161,7 +156,7 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
             <div className="flex items-center justify-between rounded-lg border border-border p-3">
               <div className="flex items-center gap-2 min-w-0">
                 <CheckCircle2 className="size-4 text-green-500 shrink-0" />
-                <span className="text-sm font-medium">Connected</span>
+                <span className="text-sm font-medium">{t("sync.connected")}</span>
               </div>
               <Button
                 variant="ghost"
@@ -170,7 +165,7 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
                 className="gap-1.5 text-muted-foreground hover:text-foreground shrink-0"
               >
                 <Unlink className="size-3.5" />
-                Disconnect
+                {t("sync.disconnect")}
               </Button>
             </div>
             <a
@@ -181,7 +176,7 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
                 hover:text-primary transition-colors"
             >
               <ExternalLink className="size-3 shrink-0" />
-              View your Cetele Logs sheet
+              {t("sync.view_sheet")}
             </a>
           </div>
         )}
@@ -190,12 +185,12 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
           <div className="flex flex-col gap-2">
             <Button onClick={() => login()} className="w-full gap-2">
               <GoogleIcon />
-              Connect with Google
+              {t("sync.connect_google")}
             </Button>
             {loginError && (
               <p className="text-xs text-destructive flex items-center gap-1">
                 <AlertCircle className="size-3 shrink-0" />
-                Authentication failed. Please try again.
+                {t("sync.auth_failed")}
               </p>
             )}
           </div>
@@ -214,15 +209,15 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
               {syncStatus === "success" && <CheckCircle2 className="size-3.5" />}
               {syncStatus === "error" && <AlertCircle className="size-3.5" />}
               {syncStatus === "idle" && <RefreshCw className="size-3.5" />}
-              {syncStatus === "syncing" && "Syncing…"}
-              {syncStatus === "success" && "Synced!"}
-              {syncStatus === "error" && "Sync failed — retry?"}
-              {syncStatus === "idle" && `Sync All Records (${records.length})`}
+              {syncStatus === "syncing" && t("sync.syncing")}
+              {syncStatus === "success" && t("sync.synced")}
+              {syncStatus === "error" && t("sync.sync_failed_retry")}
+              {syncStatus === "idle" && t("sync.sync_all", { count: records.length })}
             </Button>
           )}
           {!isSettingUp && (
             <Button variant="outline" onClick={onClose} className="w-full">
-              Close
+              {t("sync.close")}
             </Button>
           )}
         </DialogFooter>

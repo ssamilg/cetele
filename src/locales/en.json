@@ -1,0 +1,113 @@
+{
+  "landing": {
+    "badge": "Çetele v1.0",
+    "word1": "Master",
+    "word2": "Your",
+    "word3": "Time.",
+    "subtitle1": "Frictionless time tracking, built for deep work.",
+    "subtitle2": "No clutter. No noise. Just focus.",
+    "feature_timer": "Real-time timer",
+    "feature_sheets": "Google Sheets sync",
+    "feature_earnings": "Earnings tracker",
+    "feature_analytics": "Daily analytics",
+    "cta": "Start Tracking",
+    "privacy": "All data stored locally · No account required"
+  },
+  "nav": {
+    "start": "Start",
+    "stop": "Stop",
+    "manual_entry_aria": "Log time manually"
+  },
+  "app": {
+    "title": "Time Log",
+    "description": "Track and review all your logged work sessions.",
+    "export": "Export",
+    "sync_sheets": "Sync Sheets",
+    "rate_suffix": "/hr",
+    "footer_made_by": "Made by",
+    "footer_with_love": "with ❤️"
+  },
+  "stats": {
+    "hours_today": "Hours Today",
+    "tasks_today": "Tasks Today",
+    "earned_today": "Earned Today"
+  },
+  "table": {
+    "col_task": "Task",
+    "col_description": "Description",
+    "col_started": "Started",
+    "col_stopped": "Stopped",
+    "col_duration": "Duration",
+    "col_earned": "Earned",
+    "empty_title": "No time entries yet",
+    "empty_desc": "Start a task using the timer in the navbar to begin tracking your work.",
+    "no_description": "No description",
+    "entry_count_one": "{{count}} entry",
+    "entry_count_other": "{{count}} entries"
+  },
+  "modal": {
+    "start_title": "Start New Task",
+    "start_desc": "Enter the task details to begin tracking your time.",
+    "edit_title": "Edit Entry",
+    "edit_desc": "Modify the task details for this time entry.",
+    "manual_title": "Log Time Manually",
+    "manual_desc": "Add a completed time entry with custom start and end times.",
+    "label_started": "Started",
+    "label_stopped": "Stopped",
+    "label_duration": "Duration",
+    "label_title": "Title",
+    "label_description": "Description",
+    "placeholder_title": "What are you working on?",
+    "placeholder_desc": "Optional notes or context...",
+    "quick_5min": "5 min",
+    "quick_15min": "15 min",
+    "quick_30min": "30 min",
+    "quick_1hr": "1 hr",
+    "time_error": "End time must be after start time.",
+    "btn_cancel": "Cancel",
+    "btn_delete": "Delete",
+    "btn_save": "Save Changes",
+    "btn_start": "Start Timer",
+    "btn_log": "Log Entry",
+    "delete_confirm_title": "Delete entry?",
+    "delete_confirm_desc": "Are you sure you want to delete this time entry? This action cannot be undone.",
+    "delete_confirm_cancel": "Cancel",
+    "delete_confirm_action": "Delete"
+  },
+  "sync": {
+    "title": "Sync to Google Sheets",
+    "desc_connected": "Your time logs are automatically synced after every session.",
+    "desc_disconnected": "Connect your Google account to back up your time logs to a private spreadsheet.",
+    "creating_sheet": "Creating your spreadsheet…",
+    "initial_sync": "Syncing your records…",
+    "error": "Something went wrong. Please try again.",
+    "connected": "Connected",
+    "disconnect": "Disconnect",
+    "view_sheet": "View your Cetele Logs sheet",
+    "connect_google": "Connect with Google",
+    "auth_failed": "Authentication failed. Please try again.",
+    "try_again": "Try again",
+    "syncing": "Syncing…",
+    "synced": "Synced!",
+    "sync_failed_retry": "Sync failed — retry?",
+    "sync_all": "Sync All Records ({{count}})",
+    "close": "Close"
+  },
+  "fmt": {
+    "h": "h",
+    "m": "m",
+    "s": "s"
+  },
+  "toast": {
+    "sync_expired": "Google session expired — please reconnect to resume syncing.",
+    "sync_background_failed": "Background sync failed, but local data is safe",
+    "save_failed": "Failed to save time record locally",
+    "google_connected": "Successfully connected to Google",
+    "google_connect_failed": "Failed to connect to Google",
+    "sync_success": "Spreadsheet synced successfully",
+    "sync_failed": "Failed to sync with Google Sheets",
+    "sync_expired_reconnect": "Google session expired — please reconnect.",
+    "export_success": "Logs exported as CSV",
+    "export_failed": "Failed to export logs"
+  }
+}

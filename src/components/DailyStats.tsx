@@ -1,4 +1,5 @@
 import { Clock, ListChecks } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent } from "@/components/ui/card"
 import { formatDuration } from "@/lib/formatters"
 import { useTimerStore, CURRENCY_SYMBOLS } from "@/store/useTimerStore"
@@ -49,6 +50,7 @@ function StatCard({ icon, label, value, iconClassName }: StatCardProps) {
 }
 
 export function DailyStats() {
+  const { t } = useTranslation()
   const records = useTimerStore((s) => s.records)
   const hourlyRate = useTimerStore((s) => s.hourlyRate)
   const currency = useTimerStore((s) => s.currency)
@@ -61,20 +63,20 @@ export function DailyStats() {
     <div className={cn("grid grid-cols-3 gap-4", hourlyRate > 0 ? "grid-cols-3" : "grid-cols-2")}>
       <StatCard
         icon={<Clock className="size-5" />}
-        label="Hours Today"
+        label={t("stats.hours_today")}
         value={totalSeconds > 0 ? formatDuration(totalSeconds) : "—"}
         iconClassName="bg-primary/10 text-primary"
       />
       <StatCard
         icon={<ListChecks className="size-5" />}
-        label="Tasks Today"
+        label={t("stats.tasks_today")}
         value={taskCount > 0 ? String(taskCount) : "—"}
         iconClassName="bg-blue-500/10 text-blue-500"
       />
       {hourlyRate > 0 && (
         <StatCard
           icon={<span className="text-lg font-semibold leading-none">{CURRENCY_SYMBOLS[currency]}</span>}
-          label="Earned Today"
+          label={t("stats.earned_today")}
           value={totalSeconds > 0 ? formatEarnedToday(totalSeconds, hourlyRate, currency) : "—"}
           iconClassName="bg-green-500/10 text-green-500"
         />

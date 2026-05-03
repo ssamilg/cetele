@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
+import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { Download, Sheet } from "lucide-react"
 import { Navbar } from "@/components/timer/Navbar"
@@ -27,6 +28,7 @@ export function App() {
   const setHourlyRate = useTimerStore((s) => s.setHourlyRate)
   const currency = useTimerStore((s) => s.currency)
 
+  const { t } = useTranslation()
   const [isAppEntered, setIsAppEntered] = useState(false)
   const [taskModalOpen, setTaskModalOpen] = useState(false)
   const [manualModalOpen, setManualModalOpen] = useState(false)
@@ -95,10 +97,8 @@ export function App() {
         <div className="flex flex-col gap-6 flex-1">
           <div className="flex items-end justify-between">
             <div className="flex flex-col gap-1">
-              <h1 className="text-2xl font-semibold tracking-tight">Time Log</h1>
-              <p className="text-sm text-muted-foreground">
-                Track and review all your logged work sessions.
-              </p>
+              <h1 className="text-2xl font-semibold tracking-tight">{t("app.title")}</h1>
+              <p className="text-sm text-muted-foreground">{t("app.description")}</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <div className="flex items-center rounded-md border border-border overflow-hidden h-8 text-sm bg-background">
@@ -117,7 +117,7 @@ export function App() {
                     [&::-webkit-outer-spin-button]:appearance-none"
                 />
                 <span className="px-2 text-muted-foreground border-l border-border h-full flex items-center text-xs select-none">
-                  /hr
+                  {t("app.rate_suffix")}
                 </span>
               </div>
               <Button
@@ -126,16 +126,16 @@ export function App() {
                 onClick={() => {
                   try {
                     exportToCsv(records, hourlyRate, currency)
-                    toast.success("Logs exported as CSV")
+                    toast.success(t("toast.export_success"))
                   } catch {
-                    toast.error("Failed to export logs")
+                    toast.error(t("toast.export_failed"))
                   }
                 }}
                 className="gap-1.5 text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700
                   dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
               >
                 <Download className="size-3.5" />
-                Export
+                  {t("app.export")}
               </Button>
               <Button
                 variant="outline"
@@ -145,7 +145,7 @@ export function App() {
                   dark:text-green-400 dark:border-green-800 dark:hover:bg-green-900/20 dark:hover:text-green-300"
               >
                 <Sheet className="size-3.5" />
-                Sync Sheets
+                  {t("app.sync_sheets")}
               </Button>
             </div>
           </div>
@@ -186,7 +186,7 @@ export function App() {
         <footer className="fixed bottom-0 inset-x-0 h-9 border-t border-border bg-card flex items-center px-6">
           <span className="flex-1 text-xs text-muted-foreground">v1.0</span>
           <span className="text-xs text-muted-foreground">
-            Made by{" "}
+            {t("app.footer_made_by")}{" "}
             <a
               href="https://ssamilg.dev"
               target="_blank"
@@ -195,7 +195,7 @@ export function App() {
             >
               SSG
             </a>
-            {" "}with ❤️
+            {" "}{t("app.footer_with_love")}
           </span>
           <span className="flex-1" />
         </footer>

@@ -1,0 +1,113 @@
+{
+  "landing": {
+    "badge": "Çetele v1.0",
+    "word1": "Zamanını",
+    "word2": "Ele",
+    "word3": "Geçir.",
+    "subtitle1": "Derin odak için tasarlanmış, sürtünmesiz zaman takibi.",
+    "subtitle2": "Karmaşıklık yok. Gürültü yok. Sadece odak.",
+    "feature_timer": "Gerçek zamanlı sayaç",
+    "feature_sheets": "Google Sheets entegrasyonu",
+    "feature_earnings": "Kazanç takibi",
+    "feature_analytics": "Günlük analitik",
+    "cta": "Takibe Başla",
+    "privacy": "Tüm veriler yerel olarak saklanır · Hesap gerekmez"
+  },
+  "nav": {
+    "start": "Başla",
+    "stop": "Durdur",
+    "manual_entry_aria": "Manuel zaman girişi ekle"
+  },
+  "app": {
+    "title": "Zaman Günlüğü",
+    "description": "Çalışma oturumlarınızı takip edin ve inceleyin.",
+    "export": "Dışa Aktar",
+    "sync_sheets": "Senkronize Et",
+    "rate_suffix": "/sa",
+    "footer_made_by": "Yapan",
+    "footer_with_love": "ile ❤️"
+  },
+  "stats": {
+    "hours_today": "Bugün Çalışma",
+    "tasks_today": "Bugün Görev",
+    "earned_today": "Bugün Kazanç"
+  },
+  "table": {
+    "col_task": "Görev",
+    "col_description": "Açıklama",
+    "col_started": "Başlangıç",
+    "col_stopped": "Bitiş",
+    "col_duration": "Süre",
+    "col_earned": "Kazanç",
+    "empty_title": "Henüz zaman girişi yok",
+    "empty_desc": "Çalışmanızı takip etmeye başlamak için navbar'daki sayacı kullanın.",
+    "no_description": "Açıklama yok",
+    "entry_count_one": "{{count}} giriş",
+    "entry_count_other": "{{count}} giriş"
+  },
+  "modal": {
+    "start_title": "Yeni Görev Başlat",
+    "start_desc": "Zaman takibine başlamak için görev bilgilerini girin.",
+    "edit_title": "Girişi Düzenle",
+    "edit_desc": "Bu zaman girişinin görev ayrıntılarını düzenleyin.",
+    "manual_title": "Manuel Zaman Girişi",
+    "manual_desc": "Özel başlangıç ve bitiş saatleriyle tamamlanmış bir giriş ekleyin.",
+    "label_started": "Başlangıç",
+    "label_stopped": "Bitiş",
+    "label_duration": "Süre",
+    "label_title": "Başlık",
+    "label_description": "Açıklama",
+    "placeholder_title": "Ne üzerinde çalışıyorsunuz?",
+    "placeholder_desc": "İsteğe bağlı notlar veya bağlam...",
+    "quick_5min": "5 dak",
+    "quick_15min": "15 dak",
+    "quick_30min": "30 dak",
+    "quick_1hr": "1 sa",
+    "time_error": "Bitiş zamanı başlangıç zamanından sonra olmalıdır.",
+    "btn_cancel": "İptal",
+    "btn_delete": "Sil",
+    "btn_save": "Değişiklikleri Kaydet",
+    "btn_start": "Sayacı Başlat",
+    "btn_log": "Girişi Kaydet",
+    "delete_confirm_title": "Giriş silinsin mi?",
+    "delete_confirm_desc": "Bu zaman girişini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+    "delete_confirm_cancel": "İptal",
+    "delete_confirm_action": "Sil"
+  },
+  "sync": {
+    "title": "Google Sheets'e Senkronize Et",
+    "desc_connected": "Zaman günlükleriniz her oturumdan sonra otomatik olarak senkronize edilir.",
+    "desc_disconnected": "Zaman günlüklerinizi özel bir tabloya yedeklemek için Google hesabınızı bağlayın.",
+    "creating_sheet": "Tablonuz oluşturuluyor…",
+    "initial_sync": "Kayıtlarınız senkronize ediliyor…",
+    "error": "Bir şeyler yanlış gitti. Lütfen tekrar deneyin.",
+    "connected": "Bağlandı",
+    "disconnect": "Bağlantıyı Kes",
+    "view_sheet": "Çetele Kayıtları tablonuzu görüntüleyin",
+    "connect_google": "Google ile Bağlan",
+    "auth_failed": "Kimlik doğrulama başarısız. Lütfen tekrar deneyin.",
+    "try_again": "Tekrar dene",
+    "syncing": "Senkronize ediliyor…",
+    "synced": "Senkronize edildi!",
+    "sync_failed_retry": "Senkronizasyon başarısız — tekrar dene?",
+    "sync_all": "Tüm Kayıtları Senkronize Et ({{count}})",
+    "close": "Kapat"
+  },
+  "fmt": {
+    "h": "sa",
+    "m": "dk",
+    "s": "sn"
+  },
+  "toast": {
+    "sync_expired": "Google oturumunuz sona erdi — senkronizasyona devam etmek için yeniden bağlanın.",
+    "sync_background_failed": "Arka plan senkronizasyonu başarısız, yerel veriler güvende",
+    "save_failed": "Zaman kaydı yerel olarak kaydedilemedi",
+    "google_connected": "Google'a başarıyla bağlandı",
+    "google_connect_failed": "Google'a bağlanılamadı",
+    "sync_success": "Tablo başarıyla senkronize edildi",
+    "sync_failed": "Google Sheets ile senkronizasyon başarısız",
+    "sync_expired_reconnect": "Google oturumunuz sona erdi — yeniden bağlanın.",
+    "export_success": "Günlükler CSV olarak dışa aktarıldı",
+    "export_failed": "Günlükler dışa aktarılamadı"
+  }
+}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Play, Pencil, Trash2, Clock, TimerIcon } from "lucide-react"
 import {
   Dialog,
@@ -37,12 +38,6 @@ interface TaskFormModalProps {
   onCancel: () => void
 }
 
-const QUICK_SPANS = [
-  { label: "5 min", minutes: 5 },
-  { label: "15 min", minutes: 15 },
-  { label: "30 min", minutes: 30 },
-  { label: "1 hr", minutes: 60 },
-]
 
 function toDateInputValue(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0")
@@ -68,9 +63,17 @@ export function TaskFormModal({
   onDelete,
   onCancel,
 }: TaskFormModalProps) {
+  const { t } = useTranslation()
   const isEdit = mode === "edit"
   const isManual = mode === "manual"
   const isEditLike = isEdit || isManual
+
+  const QUICK_SPANS = [
+    { label: t("modal.quick_5min"), minutes: 5 },
+    { label: t("modal.quick_15min"), minutes: 15 },
+    { label: t("modal.quick_30min"), minutes: 30 },
+    { label: t("modal.quick_1hr"), minutes: 60 },
+  ]
 
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -167,7 +170,7 @@ export function TaskFormModal({
                   <div className="flex size-7 items-center justify-center rounded-md bg-primary/10">
                     <Pencil className="size-4 text-primary" />
                   </div>
-                  Edit Entry
+                  {t("modal.edit_title")}
                 </>
               )}
               {isManual && (
@@ -175,7 +178,7 @@ export function TaskFormModal({
                   <div className="flex size-7 items-center justify-center rounded-md bg-primary/10">
                     <TimerIcon className="size-4 text-primary" />
                   </div>
-                  Log Time Manually
+                  {t("modal.manual_title")}
                 </>
               )}
               {mode === "start" && (
@@ -183,14 +186,14 @@ export function TaskFormModal({
                   <div className="flex size-7 items-center justify-center rounded-md bg-primary/10">
                     <Play className="size-4 text-primary fill-primary" />
                   </div>
-                  Start New Task
+                  {t("modal.start_title")}
                 </>
               )}
             </DialogTitle>
             <DialogDescription>
-              {isEdit && "Modify the task details for this time entry."}
-              {isManual && "Add a completed time entry with custom start and end times."}
-              {mode === "start" && "Enter the task details to begin tracking your time."}
+              {isEdit && t("modal.edit_desc")}
+              {isManual && t("modal.manual_desc")}
+              {mode === "start" && t("modal.start_desc")}
             </DialogDescription>
           </DialogHeader>
 
@@ -199,7 +202,7 @@ export function TaskFormModal({
               <>
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-col gap-1.5">
-                    <Label>Started</Label>
+                    <Label>{t("modal.label_started")}</Label>
                     <div className="flex gap-2">
                       <Input
                         type="date"
@@ -234,7 +237,7 @@ export function TaskFormModal({
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <Label>Stopped</Label>
+                    <Label>{t("modal.label_stopped")}</Label>
                     <div className="flex gap-2">
                       <Input
                         type="date"
@@ -254,7 +257,7 @@ export function TaskFormModal({
                   {isTimeValid && editedDuration > 0 && (
                     <div className="flex items-center gap-2">
                       <Clock className="size-3.5 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">Duration</span>
+                      <span className="text-xs text-muted-foreground">{t("modal.label_duration")}</span>
                       <Badge variant="secondary" className="ml-auto font-mono text-xs">
                         {formatDuration(editedDuration)}
                       </Badge>
@@ -262,7 +265,7 @@ export function TaskFormModal({
                   )}
 
                   {!isTimeValid && startDateInput && endDateInput && (
-                    <p className="text-xs text-destructive">End time must be after start time.</p>
+                    <p className="text-xs text-destructive">{t("modal.time_error")}</p>
                   )}
                 </div>
 
@@ -271,10 +274,10 @@ export function TaskFormModal({
             )}
 
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="task-title">Title <span className="text-destructive">*</span></Label>
+              <Label htmlFor="task-title">{t("modal.label_title")} <span className="text-destructive">*</span></Label>
               <Input
                 id="task-title"
-                placeholder="What are you working on?"
+                placeholder={t("modal.placeholder_title")}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") handleSubmit() }}
@@ -283,10 +286,10 @@ export function TaskFormModal({
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="task-desc">Description</Label>
+              <Label htmlFor="task-desc">{t("modal.label_description")}</Label>
               <Textarea
                 id="task-desc"
-                placeholder="Optional notes or context..."
+                placeholder={t("modal.placeholder_desc")}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="resize-none"
@@ -303,11 +306,11 @@ export function TaskFormModal({
                 className="text-destructive hover:text-destructive hover:bg-destructive/10 mr-auto"
               >
                 <Trash2 className="size-3.5" />
-                Delete
+                {t("modal.btn_delete")}
               </Button>
             )}
             <Button variant="outline" onClick={onCancel}>
-              Cancel
+              {t("modal.btn_cancel")}
             </Button>
             <Button
               onClick={handleSubmit}
@@ -317,19 +320,19 @@ export function TaskFormModal({
               {isEdit && (
                 <>
                   <Pencil className="size-3.5" />
-                  Save Changes
+                  {t("modal.btn_save")}
                 </>
               )}
               {isManual && (
                 <>
                   <TimerIcon className="size-3.5" />
-                  Log Entry
+                  {t("modal.btn_log")}
                 </>
               )}
               {mode === "start" && (
                 <>
                   <Play className="size-3.5 fill-current" />
-                  Start Timer
+                  {t("modal.btn_start")}
                 </>
               )}
             </Button>
@@ -341,18 +344,18 @@ export function TaskFormModal({
         <AlertDialog open={deleteConfirm} onOpenChange={setDeleteConfirm}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete entry?</AlertDialogTitle>
+              <AlertDialogTitle>{t("modal.delete_confirm_title")}</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete this time entry? This action cannot be undone.
+                {t("modal.delete_confirm_desc")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{t("modal.delete_confirm_cancel")}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDelete}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Delete
+                {t("modal.delete_confirm_action")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
