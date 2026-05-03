@@ -1,19 +1,31 @@
 import { Clock, Play, Square, TimerIcon } from "lucide-react"
 import { formatClock } from "@/lib/formatters"
-import { useTimerStore } from "@/store/useTimerStore"
+import { useTimerStore, CURRENCY_LABELS, CURRENCY_SYMBOLS } from "@/store/useTimerStore"
+import type { Currency } from "@/store/useTimerStore"
 import { useElapsed } from "@/hooks/useElapsed"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ModeToggle } from "@/components/mode-toggle"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface NavbarProps {
   onStartStop: () => void
   onManualEntry: () => void
 }
 
+const CURRENCIES: Currency[] = ["USD", "EUR", "TRY"]
+
 export function Navbar({ onStartStop, onManualEntry }: NavbarProps) {
   const isRunning = useTimerStore((s) => s.timer.isRunning)
   const activeTask = useTimerStore((s) => s.timer.activeTask)
+  const currency = useTimerStore((s) => s.currency)
+  const setCurrency = useTimerStore((s) => s.setCurrency)
   const elapsed = useElapsed(activeTask?.startTime ?? null)
 
   return (
@@ -69,7 +81,22 @@ export function Navbar({ onStartStop, onManualEntry }: NavbarProps) {
           </Button>
         </div>
 
-        <div className="flex items-center justify-end flex-1">
+        <div className="flex items-center justify-end gap-2 flex-1">
+          <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
+            <SelectTrigger className="h-8 w-28 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {CURRENCIES.map((c) => (
+                <SelectItem key={c} value={c} className="text-xs">
+                  <span className="flex items-center gap-1.5">
+                    <span className="font-medium">{CURRENCY_SYMBOLS[c]}</span>
+                    {CURRENCY_LABELS[c]}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <ModeToggle />
         </div>
       </div>

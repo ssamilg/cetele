@@ -1,7 +1,8 @@
-import { Clock, ListChecks, DollarSign } from "lucide-react"
+import { Clock, ListChecks } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { formatDuration } from "@/lib/formatters"
-import { useTimerStore } from "@/store/useTimerStore"
+import { useTimerStore, CURRENCY_SYMBOLS } from "@/store/useTimerStore"
+import type { Currency } from "@/store/useTimerStore"
 import { cn } from "@/lib/utils"
 
 function isToday(date: Date): boolean {
@@ -13,13 +14,13 @@ function isToday(date: Date): boolean {
   )
 }
 
-function formatEarnedToday(totalSeconds: number, hourlyRate: number): string {
+function formatEarnedToday(totalSeconds: number, hourlyRate: number, currency: Currency): string {
   const amount = (totalSeconds / 3600) * hourlyRate
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
+  const formatted = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount)
+  return `${CURRENCY_SYMBOLS[currency]}${formatted}`
 }
 
 interface StatCardProps {
@@ -50,6 +51,7 @@ function StatCard({ icon, label, value, iconClassName }: StatCardProps) {
 export function DailyStats() {
   const records = useTimerStore((s) => s.records)
   const hourlyRate = useTimerStore((s) => s.hourlyRate)
+  const currency = useTimerStore((s) => s.currency)
 
   const todayRecords = records.filter((r) => isToday(r.startTime))
   const totalSeconds = todayRecords.reduce((sum, r) => sum + r.duration, 0)
@@ -70,10 +72,10 @@ export function DailyStats() {
         iconClassName="bg-blue-500/10 text-blue-500"
       />
       {hourlyRate > 0 && (
-      <StatCard
-        icon={<DollarSign className="size-5" />}
-        label="Earned Today"
-        value={hourlyRate > 0 && totalSeconds > 0 ? formatEarnedToday(totalSeconds, hourlyRate) : "—"}
+        <StatCard
+          icon={<span className="text-lg font-semibold leading-none">{CURRENCY_SYMBOLS[currency]}</span>}
+          label="Earned Today"
+          value={totalSeconds > 0 ? formatEarnedToday(totalSeconds, hourlyRate, currency) : "—"}
           iconClassName="bg-green-500/10 text-green-500"
         />
       )}

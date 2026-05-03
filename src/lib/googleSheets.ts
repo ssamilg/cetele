@@ -1,5 +1,7 @@
 import type { TimeRecord } from "@/types"
 import { formatDateTime, formatDuration } from "@/lib/formatters"
+import type { Currency } from "@/store/useTimerStore"
+import { CURRENCY_LABELS, CURRENCY_SYMBOLS } from "@/store/useTimerStore"
 
 export class GoogleSheetsError extends Error {
   readonly status: number
@@ -12,10 +14,12 @@ export class GoogleSheetsError extends Error {
 
 const BASE_HEADERS = ["Task", "Description", "Started", "Stopped", "Duration"]
 
-function buildRows(records: TimeRecord[], hourlyRate: number): string[][] {
+function buildRows(records: TimeRecord[], hourlyRate: number, currency: Currency): string[][] {
   const hasRate = hourlyRate > 0
   return records.map((r) => {
-    const earned = hasRate ? ((r.duration / 3600) * hourlyRate).toFixed(2) : null
+    const earned = hasRate
+      ? `${CURRENCY_SYMBOLS[currency]}${new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format((r.duration / 3600) * hourlyRate)}`
+      : null
     return [
       r.taskName,
       r.description || "No description",
@@ -70,13 +74,15 @@ export async function syncLogsToSheet(
   token: string,
   sheetId: string,
   hourlyRate = 0,
+  currency: Currency = "USD",
 ): Promise<void> {
   const base = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}`
-  const headers = hourlyRate > 0 ? [...BASE_HEADERS, "Earned (USD)"] : BASE_HEADERS
+  const earnedHeader = `Earned (${CURRENCY_LABELS[currency]})`
+  const headers = hourlyRate > 0 ? [...BASE_HEADERS, earnedHeader] : BASE_HEADERS
 
   await sheetsRequest(`${base}/values/A1:Z:clear`, "POST", token)
 
   await sheetsRequest(`${base}/values/A1?valueInputOption=USER_ENTERED`, "PUT", token, {
-    values: [headers, ...buildRows(records, hourlyRate)],
+    values: [headers, ...buildRows(records, hourlyRate, currency)],
   })
 }

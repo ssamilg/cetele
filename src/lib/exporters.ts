@@ -1,12 +1,15 @@
 import type { TimeRecord } from "@/types"
 import { formatDateTime, formatDuration } from "@/lib/formatters"
+import type { Currency } from "@/store/useTimerStore"
+import { CURRENCY_LABELS, CURRENCY_SYMBOLS } from "@/store/useTimerStore"
 
-export function exportToCsv(entries: TimeRecord[], hourlyRate = 0): void {
+export function exportToCsv(entries: TimeRecord[], hourlyRate = 0, currency: Currency = "USD"): void {
   const hasRate = hourlyRate > 0
-  const headers = ["Task", "Description", "Started", "Stopped", "Duration", ...(hasRate ? ["Earned (USD)"] : [])]
+  const earnedLabel = `Earned (${CURRENCY_LABELS[currency]})`
+  const headers = ["Task", "Description", "Started", "Stopped", "Duration", ...(hasRate ? [earnedLabel] : [])]
   const rows = entries.map((e) => {
     const earned = hasRate
-      ? `$${((e.duration / 3600) * hourlyRate).toFixed(2)}`
+      ? `${CURRENCY_SYMBOLS[currency]}${new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format((e.duration / 3600) * hourlyRate)}`
       : null
     return [
       e.taskName,

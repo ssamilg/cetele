@@ -5,6 +5,10 @@ import { createIdbStorage } from "@/lib/db"
 import { syncLogsToSheet, GoogleSheetsError } from "@/lib/googleSheets"
 import type { ActiveTask, TimeRecord, TimerState } from "@/types"
 
+export type Currency = "USD" | "EUR" | "TRY"
+export const CURRENCY_LABELS: Record<Currency, string> = { USD: "USD", EUR: "EUR", TRY: "TL" }
+export const CURRENCY_SYMBOLS: Record<Currency, string> = { USD: "$", EUR: "€", TRY: "₺" }
+
 interface TimerStoreState {
   records: TimeRecord[]
   timer: TimerState
@@ -17,6 +21,7 @@ interface SyncStoreState {
 
 interface PrefsStoreState {
   hourlyRate: number
+  currency: Currency
 }
 
 type PersistedState = TimerStoreState & Pick<SyncStoreState, "spreadsheetId"> & PrefsStoreState
@@ -30,6 +35,7 @@ interface TimerStoreActions {
   setGoogleAccessToken: (token: string | null) => void
   setSpreadsheetId: (id: string | null) => void
   setHourlyRate: (rate: number) => void
+  setCurrency: (currency: Currency) => void
 }
 
 type TimerStore = TimerStoreState & SyncStoreState & PrefsStoreState & TimerStoreActions
@@ -68,6 +74,7 @@ export const useTimerStore = create<TimerStore>()(
       googleAccessToken: sessionStorage.getItem("cetele-google-token"),
       spreadsheetId: null,
       hourlyRate: 0,
+      currency: "USD" as Currency,
 
       startTimer: (taskName, description) => {
         const activeTask: ActiveTask = { taskName, description, startTime: new Date() }
@@ -96,7 +103,7 @@ export const useTimerStore = create<TimerStore>()(
 
         if (state.googleAccessToken && state.spreadsheetId) {
           syncLogsToSheet(
-            updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate,
+            updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate, state.currency,
           ).catch(handleSyncError)
         }
       },
@@ -107,7 +114,7 @@ export const useTimerStore = create<TimerStore>()(
         set({ records: updatedRecords })
         if (state.googleAccessToken && state.spreadsheetId) {
           syncLogsToSheet(
-            updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate,
+            updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate, state.currency,
           ).catch(handleSyncError)
         }
       },
@@ -118,7 +125,7 @@ export const useTimerStore = create<TimerStore>()(
         set({ records: updatedRecords })
         if (state.googleAccessToken && state.spreadsheetId) {
           syncLogsToSheet(
-            updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate,
+            updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate, state.currency,
           ).catch(handleSyncError)
         }
       },
@@ -129,7 +136,7 @@ export const useTimerStore = create<TimerStore>()(
         set({ records: updatedRecords })
         if (state.googleAccessToken && state.spreadsheetId) {
           syncLogsToSheet(
-            updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate,
+            updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate, state.currency,
           ).catch(handleSyncError)
         }
       },
@@ -150,17 +157,22 @@ export const useTimerStore = create<TimerStore>()(
       setHourlyRate: (rate) => {
         set({ hourlyRate: rate })
       },
+
+      setCurrency: (currency) => {
+        set({ currency })
+      },
     })},
     {
       name: "cetele-store",
       storage: createIdbStorage<PersistedState>(() => {
         toast.error("Failed to save time record locally")
       }),
-      partialize: (state): PersistedState => ({
+        partialize: (state): PersistedState => ({
         records: state.records,
         timer: state.timer,
         spreadsheetId: state.spreadsheetId,
         hourlyRate: state.hourlyRate,
+        currency: state.currency,
       }),
     },
   ),

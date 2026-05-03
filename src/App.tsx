@@ -9,7 +9,7 @@ import { WorkLogTable } from "@/components/logs/WorkLogTable"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { exportToCsv } from "@/lib/exporters"
-import { useTimerStore } from "@/store/useTimerStore"
+import { useTimerStore, CURRENCY_SYMBOLS } from "@/store/useTimerStore"
 import type { TimeRecord } from "@/types"
 
 export function App() {
@@ -23,6 +23,7 @@ export function App() {
   const deleteEntry = useTimerStore((s) => s.deleteEntry)
   const hourlyRate = useTimerStore((s) => s.hourlyRate)
   const setHourlyRate = useTimerStore((s) => s.setHourlyRate)
+  const currency = useTimerStore((s) => s.currency)
 
   const [taskModalOpen, setTaskModalOpen] = useState(false)
   const [manualModalOpen, setManualModalOpen] = useState(false)
@@ -81,7 +82,7 @@ export function App() {
             <div className="flex items-center gap-2 shrink-0">
               <div className="flex items-center rounded-md border border-border overflow-hidden h-8 text-sm bg-background">
                 <span className="px-2.5 text-muted-foreground border-r border-border h-full flex items-center select-none">
-                  $
+                  {CURRENCY_SYMBOLS[currency]}
                 </span>
                 <Input
                   type="number"
@@ -103,7 +104,7 @@ export function App() {
                 size="sm"
                 onClick={() => {
                   try {
-                    exportToCsv(records, hourlyRate)
+                    exportToCsv(records, hourlyRate, currency)
                     toast.success("Logs exported as CSV")
                   } catch {
                     toast.error("Failed to export logs")
