@@ -1,5 +1,6 @@
-import { Clock, Play, Square, TimerIcon } from "lucide-react"
+import { Play, Square, TimerIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import logo from "@/assets/logo.webp"
 import { formatClock } from "@/lib/formatters"
 import { useTimerStore, CURRENCY_LABELS, CURRENCY_SYMBOLS } from "@/store/useTimerStore"
 import type { Currency } from "@/store/useTimerStore"
@@ -35,11 +36,13 @@ export function Navbar({ onStartStop, onManualEntry }: NavbarProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card">
       <div className="flex h-14 items-center px-6">
-        <div className="flex items-center gap-2 flex-1">
-          <div className="flex size-7 items-center justify-center rounded-md bg-primary">
-            <Clock className="size-4 text-primary-foreground" />
-          </div>
-          <span className="text-sm font-semibold tracking-tight">Çetele</span>
+        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+          <img
+            src={logo}
+            alt=""
+            className="min-h-10 h-10 w-auto max-h-10 object-contain shrink-0"
+          />
+          <span className="text-xl font-semibold tracking-tight">Çetele</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -55,14 +58,6 @@ export function Navbar({ onStartStop, onManualEntry }: NavbarProps) {
             </div>
           )}
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onManualEntry}
-            aria-label={t("nav.manual_entry_aria")}
-          >
-            <TimerIcon className="size-4" />
-          </Button>
           <Button
             variant={isRunning ? "destructive" : "default"}
             size="sm"
@@ -81,19 +76,17 @@ export function Navbar({ onStartStop, onManualEntry }: NavbarProps) {
               </>
             )}
           </Button>
+          <Button
+            variant="outline"
+            className="ring-1 ring-primary"
+            onClick={onManualEntry}
+            aria-label={t("nav.manual_entry_aria")}
+          >
+            <TimerIcon className="size-4" />+
+          </Button>
         </div>
 
         <div className="flex items-center justify-end gap-2 flex-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => i18n.changeLanguage(activeLang === "en" ? "tr" : "en")}
-            aria-label="Toggle language"
-            className="w-9 text-xs font-semibold"
-          >
-            {activeLang.toUpperCase()}
-          </Button>
-
           <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
             <SelectTrigger className="h-8 w-28 text-xs">
               <SelectValue />
@@ -109,6 +102,16 @@ export function Navbar({ onStartStop, onManualEntry }: NavbarProps) {
               ))}
             </SelectContent>
           </Select>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => i18n.changeLanguage(activeLang === "en" ? "tr" : "en")}
+            aria-label="Toggle language"
+            className="w-9 text-xs font-semibold"
+          >
+            {activeLang.toUpperCase()}
+          </Button>
 
           <ModeToggle />
         </div>

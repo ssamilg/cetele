@@ -1,6 +1,6 @@
 import { motion } from "framer-motion"
-import { Clock } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import logo from "@/assets/logo.webp"
 
 interface LandingPageProps {
   onEnter: () => void
@@ -67,12 +67,15 @@ export function LandingPage({ onEnter }: LandingPageProps) {
           initial={{ opacity: 0, scale: 0.85, y: -8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-10 inline-flex items-center gap-2 px-4 py-1.5 rounded-full
-            border border-violet-500/30 bg-violet-500/10 backdrop-blur-md"
+          className="mb-10 flex items-center justify-center gap-4"
         >
-          <Clock className="size-3.5 text-violet-400" />
-          <span className="text-xs font-medium tracking-widest text-violet-300 uppercase">
-            {t("landing.badge")}
+          <img
+            src={logo}
+            alt=""
+            className="min-h-14 h-14 w-auto max-h-14 object-contain shrink-0"
+          />
+          <span className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            Çetele
           </span>
         </motion.div>
 
