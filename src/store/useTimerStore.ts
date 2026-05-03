@@ -2,7 +2,7 @@ import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { toast } from "sonner"
 import { createIdbStorage } from "@/lib/db"
-import { syncLogsToSheet } from "@/lib/googleSheets"
+import { syncLogsToSheet, GoogleSheetsError } from "@/lib/googleSheets"
 import type { ActiveTask, TimeRecord, TimerState } from "@/types"
 
 interface TimerStoreState {
@@ -39,9 +39,30 @@ const initialTimer: TimerState = {
   activeTask: null,
 }
 
+function isClientError(err: unknown): boolean {
+  return err instanceof GoogleSheetsError && err.status >= 400 && err.status < 500
+}
+
 export const useTimerStore = create<TimerStore>()(
   persist(
-    (set, get) => ({
+    (set, get) => {
+      const disconnectGoogle = () => {
+        sessionStorage.removeItem("cetele-google-token")
+        set({ googleAccessToken: null })
+        toast.error("Google session expired — please reconnect to resume syncing.", {
+          duration: 6000,
+        })
+      }
+
+      const handleSyncError = (err: unknown) => {
+        if (isClientError(err)) {
+          disconnectGoogle()
+        } else {
+          toast.error("Background sync failed, but local data is safe")
+        }
+      }
+
+      return ({
       records: [],
       timer: initialTimer,
       googleAccessToken: sessionStorage.getItem("cetele-google-token"),
@@ -76,9 +97,7 @@ export const useTimerStore = create<TimerStore>()(
         if (state.googleAccessToken && state.spreadsheetId) {
           syncLogsToSheet(
             updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate,
-          ).catch(() => {
-            toast.error("Background sync failed, but local data is safe")
-          })
+          ).catch(handleSyncError)
         }
       },
 
@@ -89,9 +108,7 @@ export const useTimerStore = create<TimerStore>()(
         if (state.googleAccessToken && state.spreadsheetId) {
           syncLogsToSheet(
             updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate,
-          ).catch(() => {
-            toast.error("Background sync failed, but local data is safe")
-          })
+          ).catch(handleSyncError)
         }
       },
 
@@ -102,9 +119,7 @@ export const useTimerStore = create<TimerStore>()(
         if (state.googleAccessToken && state.spreadsheetId) {
           syncLogsToSheet(
             updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate,
-          ).catch(() => {
-            toast.error("Background sync failed, but local data is safe")
-          })
+          ).catch(handleSyncError)
         }
       },
 
@@ -115,9 +130,7 @@ export const useTimerStore = create<TimerStore>()(
         if (state.googleAccessToken && state.spreadsheetId) {
           syncLogsToSheet(
             updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate,
-          ).catch(() => {
-            toast.error("Background sync failed, but local data is safe")
-          })
+          ).catch(handleSyncError)
         }
       },
 
@@ -137,7 +150,7 @@ export const useTimerStore = create<TimerStore>()(
       setHourlyRate: (rate) => {
         set({ hourlyRate: rate })
       },
-    }),
+    })},
     {
       name: "cetele-store",
       storage: createIdbStorage<PersistedState>(() => {

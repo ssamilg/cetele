@@ -1,6 +1,15 @@
 import type { TimeRecord } from "@/types"
 import { formatDateTime, formatDuration } from "@/lib/formatters"
 
+export class GoogleSheetsError extends Error {
+  readonly status: number
+  constructor(status: number, statusText: string) {
+    super(`Google Sheets API error: ${status} ${statusText}`)
+    this.name = "GoogleSheetsError"
+    this.status = status
+  }
+}
+
 const BASE_HEADERS = ["Task", "Description", "Started", "Stopped", "Duration"]
 
 function buildRows(records: TimeRecord[], hourlyRate: number): string[][] {
@@ -34,7 +43,7 @@ async function sheetsRequest(
   })
 
   if (!response.ok) {
-    throw new Error(`Google Sheets API error: ${response.status} ${response.statusText}`)
+    throw new GoogleSheetsError(response.status, response.statusText)
   }
 }
 
@@ -49,7 +58,7 @@ export async function createCeteleSheet(token: string): Promise<string> {
   })
 
   if (!response.ok) {
-    throw new Error(`Google Sheets API error: ${response.status} ${response.statusText}`)
+    throw new GoogleSheetsError(response.status, response.statusText)
   }
 
   const data = (await response.json()) as { spreadsheetId: string }
