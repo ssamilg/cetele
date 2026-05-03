@@ -15,7 +15,11 @@ interface SyncStoreState {
   spreadsheetId: string | null
 }
 
-type PersistedState = TimerStoreState & Pick<SyncStoreState, "spreadsheetId">
+interface PrefsStoreState {
+  hourlyRate: number
+}
+
+type PersistedState = TimerStoreState & Pick<SyncStoreState, "spreadsheetId"> & PrefsStoreState
 
 interface TimerStoreActions {
   startTimer: (taskName: string, description: string) => void
@@ -24,9 +28,10 @@ interface TimerStoreActions {
   deleteEntry: (id: string) => void
   setGoogleAccessToken: (token: string | null) => void
   setSpreadsheetId: (id: string | null) => void
+  setHourlyRate: (rate: number) => void
 }
 
-type TimerStore = TimerStoreState & SyncStoreState & TimerStoreActions
+type TimerStore = TimerStoreState & SyncStoreState & PrefsStoreState & TimerStoreActions
 
 const initialTimer: TimerState = {
   isRunning: false,
@@ -40,6 +45,7 @@ export const useTimerStore = create<TimerStore>()(
       timer: initialTimer,
       googleAccessToken: sessionStorage.getItem("cetele-google-token"),
       spreadsheetId: null,
+      hourlyRate: 0,
 
       startTimer: (taskName, description) => {
         const activeTask: ActiveTask = { taskName, description, startTime: new Date() }
@@ -67,7 +73,9 @@ export const useTimerStore = create<TimerStore>()(
         set({ records: updatedRecords, timer: initialTimer })
 
         if (state.googleAccessToken && state.spreadsheetId) {
-          syncLogsToSheet(updatedRecords, state.googleAccessToken, state.spreadsheetId).catch(() => {
+          syncLogsToSheet(
+            updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate,
+          ).catch(() => {
             toast.error("Background sync failed, but local data is safe")
           })
         }
@@ -78,7 +86,9 @@ export const useTimerStore = create<TimerStore>()(
         const updatedRecords = state.records.map((r) => (r.id === entry.id ? entry : r))
         set({ records: updatedRecords })
         if (state.googleAccessToken && state.spreadsheetId) {
-          syncLogsToSheet(updatedRecords, state.googleAccessToken, state.spreadsheetId).catch(() => {
+          syncLogsToSheet(
+            updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate,
+          ).catch(() => {
             toast.error("Background sync failed, but local data is safe")
           })
         }
@@ -89,7 +99,9 @@ export const useTimerStore = create<TimerStore>()(
         const updatedRecords = state.records.filter((r) => r.id !== id)
         set({ records: updatedRecords })
         if (state.googleAccessToken && state.spreadsheetId) {
-          syncLogsToSheet(updatedRecords, state.googleAccessToken, state.spreadsheetId).catch(() => {
+          syncLogsToSheet(
+            updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate,
+          ).catch(() => {
             toast.error("Background sync failed, but local data is safe")
           })
         }
@@ -107,6 +119,10 @@ export const useTimerStore = create<TimerStore>()(
       setSpreadsheetId: (id) => {
         set({ spreadsheetId: id })
       },
+
+      setHourlyRate: (rate) => {
+        set({ hourlyRate: rate })
+      },
     }),
     {
       name: "cetele-store",
@@ -117,6 +133,7 @@ export const useTimerStore = create<TimerStore>()(
         records: state.records,
         timer: state.timer,
         spreadsheetId: state.spreadsheetId,
+        hourlyRate: state.hourlyRate,
       }),
     },
   ),

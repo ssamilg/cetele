@@ -6,6 +6,7 @@ import { TaskFormModal } from "@/components/timer/TaskFormModal"
 import { GoogleOAuthModal } from "@/components/sync/GoogleOAuthModal"
 import { WorkLogTable } from "@/components/logs/WorkLogTable"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { exportToCsv } from "@/lib/exporters"
 import { useTimerStore } from "@/store/useTimerStore"
 import type { TimeRecord } from "@/types"
@@ -18,6 +19,8 @@ export function App() {
   const stopTimer = useTimerStore((s) => s.stopTimer)
   const updateEntry = useTimerStore((s) => s.updateEntry)
   const deleteEntry = useTimerStore((s) => s.deleteEntry)
+  const hourlyRate = useTimerStore((s) => s.hourlyRate)
+  const setHourlyRate = useTimerStore((s) => s.setHourlyRate)
 
   const [taskModalOpen, setTaskModalOpen] = useState(false)
   const [googleModalOpen, setGoogleModalOpen] = useState(false)
@@ -68,12 +71,31 @@ export function App() {
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center rounded-md border border-border overflow-hidden h-8 text-sm bg-background">
+                <span className="px-2.5 text-muted-foreground border-r border-border h-full flex items-center select-none">
+                  $
+                </span>
+                <Input
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="0"
+                  value={hourlyRate || ""}
+                  onChange={(e) => setHourlyRate(Math.max(0, Number(e.target.value)))}
+                  className="w-20 border-0 rounded-none h-full shadow-none px-2 focus-visible:ring-0
+                    [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none
+                    [&::-webkit-outer-spin-button]:appearance-none"
+                />
+                <span className="px-2 text-muted-foreground border-l border-border h-full flex items-center text-xs select-none">
+                  /hr
+                </span>
+              </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => {
                   try {
-                    exportToCsv(records)
+                    exportToCsv(records, hourlyRate)
                     toast.success("Logs exported as CSV")
                   } catch {
                     toast.error("Failed to export logs")
@@ -98,7 +120,7 @@ export function App() {
             </div>
           </div>
 
-          <WorkLogTable entries={records} onEdit={handleEditEntry} />
+          <WorkLogTable entries={records} onEdit={handleEditEntry} hourlyRate={hourlyRate} />
         </div>
       </main>
 

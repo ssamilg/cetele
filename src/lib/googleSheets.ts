@@ -1,16 +1,21 @@
 import type { TimeRecord } from "@/types"
 import { formatDateTime, formatDuration } from "@/lib/formatters"
 
-const HEADERS = ["Task", "Description", "Started", "Stopped", "Duration"]
+const BASE_HEADERS = ["Task", "Description", "Started", "Stopped", "Duration"]
 
-function buildRows(records: TimeRecord[]): string[][] {
-  return records.map((r) => [
-    r.taskName,
-    r.description || "No description",
-    formatDateTime(r.startTime),
-    formatDateTime(r.endTime),
-    formatDuration(r.duration),
-  ])
+function buildRows(records: TimeRecord[], hourlyRate: number): string[][] {
+  const hasRate = hourlyRate > 0
+  return records.map((r) => {
+    const earned = hasRate ? ((r.duration / 3600) * hourlyRate).toFixed(2) : null
+    return [
+      r.taskName,
+      r.description || "No description",
+      formatDateTime(r.startTime),
+      formatDateTime(r.endTime),
+      formatDuration(r.duration),
+      ...(hasRate ? [earned!] : []),
+    ]
+  })
 }
 
 async function sheetsRequest(
@@ -55,12 +60,14 @@ export async function syncLogsToSheet(
   records: TimeRecord[],
   token: string,
   sheetId: string,
+  hourlyRate = 0,
 ): Promise<void> {
   const base = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}`
+  const headers = hourlyRate > 0 ? [...BASE_HEADERS, "Earned (USD)"] : BASE_HEADERS
 
   await sheetsRequest(`${base}/values/A1:Z:clear`, "POST", token)
 
   await sheetsRequest(`${base}/values/A1?valueInputOption=USER_ENTERED`, "PUT", token, {
-    values: [HEADERS, ...buildRows(records)],
+    values: [headers, ...buildRows(records, hourlyRate)],
   })
 }

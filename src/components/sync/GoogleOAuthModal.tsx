@@ -33,6 +33,7 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
   const records = useTimerStore((s) => s.records)
   const googleAccessToken = useTimerStore((s) => s.googleAccessToken)
   const spreadsheetId = useTimerStore((s) => s.spreadsheetId)
+  const hourlyRate = useTimerStore((s) => s.hourlyRate)
   const setGoogleAccessToken = useTimerStore((s) => s.setGoogleAccessToken)
   const setSpreadsheetId = useTimerStore((s) => s.setSpreadsheetId)
 
@@ -58,7 +59,7 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
 
       if (records.length > 0) {
         setSetupStatus("initial-sync")
-        await syncLogsToSheet(records, accessToken, sheetId)
+        await syncLogsToSheet(records, accessToken, sheetId, hourlyRate)
       }
 
       setSetupStatus("idle")
@@ -90,7 +91,7 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
     if (!googleAccessToken || !spreadsheetId) return
     setSyncStatus("syncing")
     try {
-      await syncLogsToSheet(records, googleAccessToken, spreadsheetId)
+      await syncLogsToSheet(records, googleAccessToken, spreadsheetId, hourlyRate)
       setSyncStatus("success")
       toast.success("Spreadsheet synced successfully")
     } catch {

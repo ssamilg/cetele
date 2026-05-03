@@ -1,18 +1,26 @@
 import type { TimeRecord } from "@/types"
 import { formatDateTime, formatDuration } from "@/lib/formatters"
 
-export function exportToCsv(entries: TimeRecord[]): void {
-  const rows = [
-    ["Task", "Description", "Started", "Stopped", "Duration"],
-    ...entries.map((e) => [
+export function exportToCsv(entries: TimeRecord[], hourlyRate = 0): void {
+  const hasRate = hourlyRate > 0
+  const headers = ["Task", "Description", "Started", "Stopped", "Duration", ...(hasRate ? ["Earned (USD)"] : [])]
+  const rows = entries.map((e) => {
+    const earned = hasRate
+      ? `$${((e.duration / 3600) * hourlyRate).toFixed(2)}`
+      : null
+    return [
       e.taskName,
       e.description,
       formatDateTime(e.startTime),
       formatDateTime(e.endTime),
       formatDuration(e.duration),
-    ]),
-  ]
-  const csv = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n")
+      ...(hasRate ? [earned!] : []),
+    ]
+  })
+
+  const csv = [headers, ...rows]
+    .map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(","))
+    .join("\n")
   const blob = new Blob([csv], { type: "text/csv" })
   const url = URL.createObjectURL(blob)
   const a = document.createElement("a")
