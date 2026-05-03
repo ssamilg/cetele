@@ -82,11 +82,11 @@ export function WorkLogTable({ entries, onEdit, hourlyRate = 0 }: WorkLogTablePr
               </TableCell>
               <TableCell className="py-4">
                 {entry.description ? (
-                  <span className="text-sm text-muted-foreground/50 line-clamp-2 max-w-72">
+                  <span className="text-sm text-muted-foreground line-clamp-2 max-w-72">
                     {entry.description}
                   </span>
                 ) : (
-                  <span className="text-sm text-muted-foreground flex items-center gap-1">
+                  <span className="text-sm text-muted-foreground/50 flex items-center gap-1">
                     <FileText className="size-3" />
                     {t("table.no_description")}
                   </span>
