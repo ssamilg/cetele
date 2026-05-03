@@ -1,5 +1,7 @@
 import { useState } from "react"
-import { Sheet, CircleCheck as CheckCircle, Loader as Loader2, Lock } from "lucide-react"
+import { useGoogleLogin } from "@react-oauth/google"
+import { Sheet, CheckCircle2, Unlink, AlertCircle, RefreshCw, Loader2, ExternalLink } from "lucide-react"
+import { createCeteleSheet, syncLogsToSheet } from "@/lib/googleSheets"
 import {
   Dialog,
   DialogContent,
@@ -9,141 +11,208 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
+import { useTimerStore } from "@/store/useTimerStore"
+
+type SetupStatus = "idle" | "creating-sheet" | "initial-sync" | "error"
+type SyncStatus = "idle" | "syncing" | "success" | "error"
 
 interface GoogleOAuthModalProps {
   open: boolean
   onClose: () => void
-  onSynced: () => void
 }
 
-type Step = "login" | "syncing" | "done"
+const SETUP_LABELS: Record<SetupStatus, string> = {
+  "idle": "",
+  "creating-sheet": "Creating your spreadsheet…",
+  "initial-sync": "Syncing your records…",
+  "error": "Something went wrong. Please try again.",
+}
 
-export function GoogleOAuthModal({ open, onClose, onSynced }: GoogleOAuthModalProps) {
-  const [step, setStep] = useState<Step>("login")
+export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
+  const records = useTimerStore((s) => s.records)
+  const googleAccessToken = useTimerStore((s) => s.googleAccessToken)
+  const spreadsheetId = useTimerStore((s) => s.spreadsheetId)
+  const setGoogleAccessToken = useTimerStore((s) => s.setGoogleAccessToken)
+  const setSpreadsheetId = useTimerStore((s) => s.setSpreadsheetId)
 
-  const handleClose = () => {
-    onClose()
-    setTimeout(() => setStep("login"), 300)
+  const [setupStatus, setSetupStatus] = useState<SetupStatus>("idle")
+  const [loginError, setLoginError] = useState(false)
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle")
+
+  const isConnected = !!googleAccessToken && setupStatus === "idle"
+  const isSettingUp = setupStatus === "creating-sheet" || setupStatus === "initial-sync"
+
+  const handleLoginSuccess = async (accessToken: string) => {
+    setLoginError(false)
+    setGoogleAccessToken(accessToken)
+
+    try {
+      let sheetId = spreadsheetId
+
+      if (!sheetId) {
+        setSetupStatus("creating-sheet")
+        sheetId = await createCeteleSheet(accessToken)
+        setSpreadsheetId(sheetId)
+      }
+
+      if (records.length > 0) {
+        setSetupStatus("initial-sync")
+        await syncLogsToSheet(records, accessToken, sheetId)
+      }
+
+      setSetupStatus("idle")
+    } catch {
+      setSetupStatus("error")
+      setGoogleAccessToken(null)
+    }
   }
 
-  const handleLogin = () => {
-    setStep("syncing")
-    // Simulate OAuth + sync
-    setTimeout(() => {
-      setStep("done")
-    }, 2000)
+  const login = useGoogleLogin({
+    scope: "https://www.googleapis.com/auth/spreadsheets",
+    onSuccess: (response) => {
+      handleLoginSuccess(response.access_token)
+    },
+    onError: () => {
+      setLoginError(true)
+    },
+  })
+
+  const handleDisconnect = () => {
+    setGoogleAccessToken(null)
+    setSyncStatus("idle")
   }
 
-  const handleDone = () => {
-    onSynced()
-    handleClose()
+  const handleManualSync = async () => {
+    if (!googleAccessToken || !spreadsheetId) return
+    setSyncStatus("syncing")
+    try {
+      await syncLogsToSheet(records, googleAccessToken, spreadsheetId)
+      setSyncStatus("success")
+    } catch {
+      setSyncStatus("error")
+    }
+  }
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      if (!isSettingUp) {
+        setSyncStatus("idle")
+        if (setupStatus === "error") setSetupStatus("idle")
+        onClose()
+      }
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose() }}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-sm">
-        {step === "login" && (
-          <>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <div className="flex size-7 items-center justify-center rounded-md bg-muted">
-                  <Sheet className="size-4 text-foreground" />
-                </div>
-                Sync to Google Sheets
-              </DialogTitle>
-              <DialogDescription>
-                Sign in with Google to export your time logs to a spreadsheet automatically.
-              </DialogDescription>
-            </DialogHeader>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <div className="flex size-7 items-center justify-center rounded-md bg-muted">
+              <Sheet className="size-4 text-foreground" />
+            </div>
+            Sync to Google Sheets
+          </DialogTitle>
+          <DialogDescription>
+            {isConnected
+              ? "Your time logs are automatically synced after every session."
+              : "Connect your Google account to back up your time logs to a private spreadsheet."}
+          </DialogDescription>
+        </DialogHeader>
 
-            <div className="flex flex-col gap-3">
-              {/* Mock Google account card */}
-              <div className="rounded-lg border p-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex size-10 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
-                    JD
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-sm font-medium">John Doe</span>
-                    <span className="text-xs text-muted-foreground truncate">john.doe@gmail.com</span>
-                  </div>
-                  <Badge variant="outline" className="ml-auto text-xs shrink-0">Mock</Badge>
-                </div>
-                <Separator className="mb-4" />
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-start gap-2 text-xs text-muted-foreground">
-                    <Lock className="size-3 mt-0.5 shrink-0" />
-                    <span>TimeTrack will have access to create and edit Google Sheets in your Drive.</span>
-                  </div>
-                </div>
+        {isSettingUp && (
+          <div className="flex flex-col items-center gap-3 py-6">
+            <Loader2 className="size-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">{SETUP_LABELS[setupStatus]}</p>
+          </div>
+        )}
+
+        {setupStatus === "error" && (
+          <div className="flex flex-col items-center gap-3 py-4">
+            <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10">
+              <AlertCircle className="size-6 text-destructive" />
+            </div>
+            <p className="text-sm text-center text-muted-foreground">{SETUP_LABELS["error"]}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { setSetupStatus("idle"); setLoginError(false) }}
+            >
+              Try again
+            </Button>
+          </div>
+        )}
+
+        {isConnected && spreadsheetId && (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between rounded-lg border border-border p-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <CheckCircle2 className="size-4 text-green-500 shrink-0" />
+                <span className="text-sm font-medium">Connected</span>
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDisconnect}
+                className="gap-1.5 text-muted-foreground hover:text-foreground shrink-0"
+              >
+                <Unlink className="size-3.5" />
+                Disconnect
+              </Button>
+            </div>
+            <a
+              href={`https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-1 py-1 text-xs text-muted-foreground
+                hover:text-primary transition-colors"
+            >
+              <ExternalLink className="size-3 shrink-0" />
+              View your Cetele Logs sheet
+            </a>
+          </div>
+        )}
 
-              <p className="text-xs text-center text-muted-foreground">
-                This is a design prototype. No real OAuth is performed.
+        {!isConnected && !isSettingUp && setupStatus !== "error" && (
+          <div className="flex flex-col gap-2">
+            <Button onClick={() => login()} className="w-full gap-2">
+              <GoogleIcon />
+              Connect with Google
+            </Button>
+            {loginError && (
+              <p className="text-xs text-destructive flex items-center gap-1">
+                <AlertCircle className="size-3 shrink-0" />
+                Authentication failed. Please try again.
               </p>
-            </div>
-
-            <DialogFooter className="flex-col gap-2 sm:flex-col">
-              <Button onClick={handleLogin} className="w-full gap-2">
-                <GoogleIcon />
-                Continue with Google
-              </Button>
-              <Button variant="ghost" onClick={handleClose} className="w-full">
-                Cancel
-              </Button>
-            </DialogFooter>
-          </>
+            )}
+          </div>
         )}
 
-        {step === "syncing" && (
-          <>
-            <DialogHeader>
-              <DialogTitle>Syncing...</DialogTitle>
-              <DialogDescription>
-                Exporting your time logs to Google Sheets.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex flex-col items-center gap-4 py-6">
-              <div className="relative flex size-16 items-center justify-center">
-                <div className="absolute inset-0 rounded-full border-2 border-muted" />
-                <Loader2 className="size-8 animate-spin text-primary" />
-              </div>
-              <div className="flex flex-col items-center gap-1 text-center">
-                <p className="text-sm font-medium">Exporting entries...</p>
-                <p className="text-xs text-muted-foreground">This usually takes a few seconds</p>
-              </div>
-            </div>
-          </>
-        )}
-
-        {step === "done" && (
-          <>
-            <DialogHeader>
-              <DialogTitle>Sync Complete</DialogTitle>
-              <DialogDescription>
-                Your time logs have been exported successfully.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex flex-col items-center gap-4 py-6">
-              <div className="flex size-16 items-center justify-center rounded-full bg-primary/10">
-                <CheckCircle className="size-8 text-primary" />
-              </div>
-              <div className="flex flex-col items-center gap-1 text-center">
-                <p className="text-sm font-medium">Export successful</p>
-                <p className="text-xs text-muted-foreground">
-                  Spreadsheet: <span className="font-medium text-foreground">TimeTrack — May 2026</span>
-                </p>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={handleDone} className="w-full">
-                Done
-              </Button>
-            </DialogFooter>
-          </>
-        )}
+        <DialogFooter className="flex-col gap-2 sm:flex-col">
+          {isConnected && !!spreadsheetId && (
+            <Button
+              variant="outline"
+              onClick={handleManualSync}
+              disabled={syncStatus === "syncing" || records.length === 0}
+              className="w-full gap-2 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700
+                dark:text-green-400 dark:border-green-800 dark:hover:bg-green-900/20 dark:hover:text-green-300"
+            >
+              {syncStatus === "syncing" && <Loader2 className="size-3.5 animate-spin" />}
+              {syncStatus === "success" && <CheckCircle2 className="size-3.5" />}
+              {syncStatus === "error" && <AlertCircle className="size-3.5" />}
+              {syncStatus === "idle" && <RefreshCw className="size-3.5" />}
+              {syncStatus === "syncing" && "Syncing…"}
+              {syncStatus === "success" && "Synced!"}
+              {syncStatus === "error" && "Sync failed — retry?"}
+              {syncStatus === "idle" && `Sync All Records (${records.length})`}
+            </Button>
+          )}
+          {!isSettingUp && (
+            <Button variant="outline" onClick={onClose} className="w-full">
+              Close
+            </Button>
+          )}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

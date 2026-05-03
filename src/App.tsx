@@ -104,7 +104,6 @@ export function App() {
       <GoogleOAuthModal
         open={googleModalOpen}
         onClose={() => setGoogleModalOpen(false)}
-        onSynced={() => setGoogleModalOpen(false)}
       />
 
       <TaskFormModal
