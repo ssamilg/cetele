@@ -15,6 +15,18 @@ import { exportToCsv } from "@/lib/exporters"
 import { useTimerStore, CURRENCY_SYMBOLS } from "@/store/useTimerStore"
 import type { TimeRecord } from "@/types"
 
+const APP_ENTERED_STORAGE_KEY = "cetele-app-entered"
+
+function readAppEnteredFromStorage(): boolean {
+  let entered = false
+  try {
+    entered = localStorage.getItem(APP_ENTERED_STORAGE_KEY) === "1"
+  } catch {
+    entered = false
+  }
+  return entered
+}
+
 export function App() {
   const records = useTimerStore((s) => s.records)
   const isRunning = useTimerStore((s) => s.timer.isRunning)
@@ -29,7 +41,7 @@ export function App() {
   const currency = useTimerStore((s) => s.currency)
 
   const { t } = useTranslation()
-  const [isAppEntered, setIsAppEntered] = useState(false)
+  const [isAppEntered, setIsAppEntered] = useState(readAppEnteredFromStorage)
   const [taskModalOpen, setTaskModalOpen] = useState(false)
   const [manualModalOpen, setManualModalOpen] = useState(false)
   const [googleModalOpen, setGoogleModalOpen] = useState(false)
@@ -71,6 +83,14 @@ export function App() {
     setManualModalOpen(false)
   }
 
+  const handleLandingEnter = () => {
+    try {
+      localStorage.setItem(APP_ENTERED_STORAGE_KEY, "1")
+    } catch {
+    }
+    setIsAppEntered(true)
+  }
+
   return (
     <AnimatePresence mode="wait">
       {!isAppEntered ? (
@@ -81,7 +101,7 @@ export function App() {
           exit={{ opacity: 0, scale: 0.97, filter: "blur(8px)" }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         >
-          <LandingPage onEnter={() => setIsAppEntered(true)} />
+          <LandingPage onEnter={handleLandingEnter} />
         </motion.div>
       ) : (
         <motion.div
@@ -93,7 +113,7 @@ export function App() {
         >
       <Navbar onStartStop={handleStartStopClick} onManualEntry={() => setManualModalOpen(true)} />
 
-      <main className="mx-auto flex w-full min-w-0 max-w-6xl flex-1 flex-col px-4 py-6 pb-16 md:px-6 md:py-8">
+      <main className="mx-auto flex w-full min-w-0 max-w-6xl flex-1 flex-col px-4 py-6 pb-20 md:px-6 md:pt-8">
         <div className="flex flex-1 flex-col gap-6">
           <div className="flex min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div className="min-w-0 flex flex-col gap-1">

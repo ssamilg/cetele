@@ -21,8 +21,11 @@ export function Navbar({ onStartStop, onManualEntry }: NavbarProps) {
 
   return (
     <header className="sticky top-0 z-50 w-full min-w-0 border-b border-border bg-card">
-      <div className="flex h-14 min-h-14 min-w-0 items-center gap-2 px-3 md:gap-4 md:px-6">
-        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+      <div
+        className="grid min-w-0 grid-cols-[1fr_auto] gap-x-2 gap-y-2 px-3 py-2 md:flex md:h-14 md:min-h-14
+          md:items-center md:gap-4 md:px-6 md:py-0"
+      >
+        <div className="col-start-1 row-start-1 flex min-w-0 items-center gap-2.5 md:order-1 md:min-w-0 md:flex-1">
           <img
             src={logo}
             alt=""
@@ -31,7 +34,10 @@ export function Navbar({ onStartStop, onManualEntry }: NavbarProps) {
           <span className="truncate text-xl font-semibold tracking-tight">Çetele</span>
         </div>
 
-        <div className="flex shrink-0 items-center justify-center gap-1.5 md:gap-2">
+        <div
+          className="col-span-2 row-start-2 flex min-w-0 items-center justify-center gap-1.5 md:order-2 md:w-auto
+            md:max-w-none md:flex-1 md:justify-center md:gap-2"
+        >
           {isRunning && activeTask && (
             <div className="flex max-w-[min(50vw,14rem)] min-w-0 items-center gap-1.5 md:max-w-56">
               <Badge variant="default" className="min-w-0 max-w-full gap-1.5">
@@ -71,7 +77,7 @@ export function Navbar({ onStartStop, onManualEntry }: NavbarProps) {
           </Button>
         </div>
 
-        <div className="flex min-w-0 flex-1 items-center justify-end">
+        <div className="col-start-2 row-start-1 flex items-center justify-end md:order-3 md:min-w-0 md:flex-1">
           <NavbarSettingsMenu />
         </div>
       </div>
