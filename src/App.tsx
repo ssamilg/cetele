@@ -4,6 +4,7 @@ import { Download, Sheet } from "lucide-react"
 import { Navbar } from "@/components/timer/Navbar"
 import { TaskFormModal } from "@/components/timer/TaskFormModal"
 import { GoogleOAuthModal } from "@/components/sync/GoogleOAuthModal"
+import { DailyStats } from "@/components/DailyStats"
 import { WorkLogTable } from "@/components/logs/WorkLogTable"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -120,6 +121,7 @@ export function App() {
             </div>
           </div>
 
+          <DailyStats />
           <WorkLogTable entries={records} onEdit={handleEditEntry} hourlyRate={hourlyRate} />
         </div>
       </main>
