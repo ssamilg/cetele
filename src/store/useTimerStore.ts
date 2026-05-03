@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
+import { toast } from "sonner"
 import { createIdbStorage } from "@/lib/db"
 import { syncLogsToSheet } from "@/lib/googleSheets"
 import type { ActiveTask, TimeRecord, TimerState } from "@/types"
@@ -66,7 +67,9 @@ export const useTimerStore = create<TimerStore>()(
         set({ records: updatedRecords, timer: initialTimer })
 
         if (state.googleAccessToken && state.spreadsheetId) {
-          syncLogsToSheet(updatedRecords, state.googleAccessToken, state.spreadsheetId).catch(() => {})
+          syncLogsToSheet(updatedRecords, state.googleAccessToken, state.spreadsheetId).catch(() => {
+            toast.error("Background sync failed, but local data is safe")
+          })
         }
       },
 
@@ -75,7 +78,9 @@ export const useTimerStore = create<TimerStore>()(
         const updatedRecords = state.records.map((r) => (r.id === entry.id ? entry : r))
         set({ records: updatedRecords })
         if (state.googleAccessToken && state.spreadsheetId) {
-          syncLogsToSheet(updatedRecords, state.googleAccessToken, state.spreadsheetId).catch(() => {})
+          syncLogsToSheet(updatedRecords, state.googleAccessToken, state.spreadsheetId).catch(() => {
+            toast.error("Background sync failed, but local data is safe")
+          })
         }
       },
 
@@ -84,7 +89,9 @@ export const useTimerStore = create<TimerStore>()(
         const updatedRecords = state.records.filter((r) => r.id !== id)
         set({ records: updatedRecords })
         if (state.googleAccessToken && state.spreadsheetId) {
-          syncLogsToSheet(updatedRecords, state.googleAccessToken, state.spreadsheetId).catch(() => {})
+          syncLogsToSheet(updatedRecords, state.googleAccessToken, state.spreadsheetId).catch(() => {
+            toast.error("Background sync failed, but local data is safe")
+          })
         }
       },
 
@@ -103,7 +110,9 @@ export const useTimerStore = create<TimerStore>()(
     }),
     {
       name: "cetele-store",
-      storage: createIdbStorage<PersistedState>(),
+      storage: createIdbStorage<PersistedState>(() => {
+        toast.error("Failed to save time record locally")
+      }),
       partialize: (state): PersistedState => ({
         records: state.records,
         timer: state.timer,

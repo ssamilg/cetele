@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { toast } from "sonner"
 import { Download, Sheet } from "lucide-react"
 import { Navbar } from "@/components/timer/Navbar"
 import { TaskFormModal } from "@/components/timer/TaskFormModal"
@@ -70,7 +71,14 @@ export function App() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => exportToCsv(records)}
+                onClick={() => {
+                  try {
+                    exportToCsv(records)
+                    toast.success("Logs exported as CSV")
+                  } catch {
+                    toast.error("Failed to export logs")
+                  }
+                }}
                 className="gap-1.5 text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700
                   dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
               >

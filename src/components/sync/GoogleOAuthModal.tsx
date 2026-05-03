@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useGoogleLogin } from "@react-oauth/google"
+import { toast } from "sonner"
 import { Sheet, CheckCircle2, Unlink, AlertCircle, RefreshCw, Loader2, ExternalLink } from "lucide-react"
 import { createCeteleSheet, syncLogsToSheet } from "@/lib/googleSheets"
 import {
@@ -61,9 +62,11 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
       }
 
       setSetupStatus("idle")
+      toast.success("Successfully connected to Google")
     } catch {
       setSetupStatus("error")
       setGoogleAccessToken(null)
+      toast.error("Failed to connect to Google")
     }
   }
 
@@ -74,6 +77,7 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
     },
     onError: () => {
       setLoginError(true)
+      toast.error("Failed to connect to Google")
     },
   })
 
@@ -88,8 +92,10 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
     try {
       await syncLogsToSheet(records, googleAccessToken, spreadsheetId)
       setSyncStatus("success")
+      toast.success("Spreadsheet synced successfully")
     } catch {
       setSyncStatus("error")
+      toast.error("Failed to sync with Google Sheets")
     }
   }
 

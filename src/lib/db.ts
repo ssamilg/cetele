@@ -1,12 +1,16 @@
 import type { PersistStorage, StorageValue } from "zustand/middleware"
 import { get, set, del } from "idb-keyval"
 
-export function createIdbStorage<T>(): PersistStorage<T> {
+export function createIdbStorage<T>(onError?: () => void): PersistStorage<T> {
   return {
     getItem: async (name: string): Promise<StorageValue<T> | null> =>
       (await get<StorageValue<T>>(name)) ?? null,
     setItem: async (name: string, value: StorageValue<T>): Promise<void> => {
-      await set(name, value)
+      try {
+        await set(name, value)
+      } catch {
+        onError?.()
+      }
     },
     removeItem: async (name: string): Promise<void> => {
       await del(name)
