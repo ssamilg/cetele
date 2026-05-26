@@ -50,6 +50,16 @@ function isClientError(err: unknown): boolean {
   return err instanceof GoogleSheetsError && err.status >= 400 && err.status < 500
 }
 
+let backgroundSheetSyncTimer: ReturnType<typeof setTimeout> | null = null
+const BACKGROUND_SHEET_SYNC_MS = 3000
+
+export function cancelDebouncedBackgroundSheetSync(): void {
+  if (backgroundSheetSyncTimer !== null) {
+    clearTimeout(backgroundSheetSyncTimer)
+    backgroundSheetSyncTimer = null
+  }
+}
+
 export const useTimerStore = create<TimerStore>()(
   persist(
     (set, get) => {
@@ -65,6 +75,24 @@ export const useTimerStore = create<TimerStore>()(
         } else {
           toast.error(i18n.t("toast.sync_background_failed"))
         }
+      }
+
+      const queueBackgroundSheetSync = () => {
+        if (backgroundSheetSyncTimer !== null) {
+          clearTimeout(backgroundSheetSyncTimer)
+        }
+        backgroundSheetSyncTimer = setTimeout(() => {
+          backgroundSheetSyncTimer = null
+          const state = get()
+          if (!state.googleAccessToken || !state.spreadsheetId) return
+          void syncLogsToSheet(
+            state.records,
+            state.googleAccessToken,
+            state.spreadsheetId,
+            state.hourlyRate,
+            state.currency,
+          ).catch(handleSyncError)
+        }, BACKGROUND_SHEET_SYNC_MS)
       }
 
       return ({
@@ -101,9 +129,7 @@ export const useTimerStore = create<TimerStore>()(
         set({ records: updatedRecords, timer: initialTimer })
 
         if (state.googleAccessToken && state.spreadsheetId) {
-          syncLogsToSheet(
-            updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate, state.currency,
-          ).catch(handleSyncError)
+          queueBackgroundSheetSync()
         }
       },
 
@@ -112,9 +138,7 @@ export const useTimerStore = create<TimerStore>()(
         const updatedRecords = [...state.records, entry]
         set({ records: updatedRecords })
         if (state.googleAccessToken && state.spreadsheetId) {
-          syncLogsToSheet(
-            updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate, state.currency,
-          ).catch(handleSyncError)
+          queueBackgroundSheetSync()
         }
       },
 
@@ -123,9 +147,7 @@ export const useTimerStore = create<TimerStore>()(
         const updatedRecords = state.records.map((r) => (r.id === entry.id ? entry : r))
         set({ records: updatedRecords })
         if (state.googleAccessToken && state.spreadsheetId) {
-          syncLogsToSheet(
-            updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate, state.currency,
-          ).catch(handleSyncError)
+          queueBackgroundSheetSync()
         }
       },
 
@@ -134,9 +156,7 @@ export const useTimerStore = create<TimerStore>()(
         const updatedRecords = state.records.filter((r) => r.id !== id)
         set({ records: updatedRecords })
         if (state.googleAccessToken && state.spreadsheetId) {
-          syncLogsToSheet(
-            updatedRecords, state.googleAccessToken, state.spreadsheetId, state.hourlyRate, state.currency,
-          ).catch(handleSyncError)
+          queueBackgroundSheetSync()
         }
       },
 

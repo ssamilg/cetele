@@ -102,6 +102,7 @@
     "synced": "Eşitlendi!",
     "sync_failed_retry": "Eşitleme başarısız — tekrar denensin mi?",
     "sync_all": "Tüm Kayıtları Eşitle ({{count}})",
+    "sync_pending": "Eşitleme hazırlanıyor…",
     "close": "Kapat"
   },
   "fmt": {

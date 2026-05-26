@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { formatDuration } from "@/lib/formatters"
+import { cn } from "@/lib/utils"
 import type { TimeRecord } from "@/types"
 
 interface TaskFormModalProps {
@@ -221,18 +222,26 @@ export function TaskFormModal({
 
                   <div className="flex flex-col gap-1.5">
                     <div className="grid grid-cols-4 gap-2">
-                      {QUICK_SPANS.map(({ label, minutes }) => (
-                        <Button
-                          key={minutes}
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => applyQuickSpan(minutes)}
-                          className="w-full"
-                        >
-                          {label}
-                        </Button>
-                      ))}
+                      {QUICK_SPANS.map(({ label, minutes }) => {
+                        const isQuickSpanActive =
+                          isTimeValid && editedDuration === minutes * 60
+                        return (
+                          <Button
+                            key={minutes}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => applyQuickSpan(minutes)}
+                            className={cn(
+                              "w-full",
+                              isQuickSpanActive &&
+                                "ring-2 ring-primary bg-primary/10 text-foreground",
+                            )}
+                          >
+                            {label}
+                          </Button>
+                        )
+                      })}
                     </div>
                   </div>
 

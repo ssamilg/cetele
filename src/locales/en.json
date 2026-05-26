@@ -102,6 +102,7 @@
     "synced": "Synced!",
     "sync_failed_retry": "Sync failed — retry?",
     "sync_all": "Sync All Records ({{count}})",
+    "sync_pending": "Preparing sync…",
     "close": "Close"
   },
   "fmt": {

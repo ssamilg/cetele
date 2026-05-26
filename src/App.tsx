@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -12,7 +12,11 @@ import { LandingPage } from "@/components/LandingPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { exportToCsv } from "@/lib/exporters"
-import { useTimerStore, CURRENCY_SYMBOLS } from "@/store/useTimerStore"
+import {
+  useTimerStore,
+  CURRENCY_SYMBOLS,
+  cancelDebouncedBackgroundSheetSync,
+} from "@/store/useTimerStore"
 import type { TimeRecord } from "@/types"
 
 const APP_ENTERED_STORAGE_KEY = "cetele-app-entered"
@@ -47,6 +51,12 @@ export function App() {
   const [googleModalOpen, setGoogleModalOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<TimeRecord | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
+
+  useEffect(() => {
+    return () => {
+      cancelDebouncedBackgroundSheetSync()
+    }
+  }, [])
 
   const handleStartStopClick = () => {
     if (isRunning && activeTask) {

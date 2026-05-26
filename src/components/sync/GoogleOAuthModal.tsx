@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useGoogleLogin } from "@react-oauth/google"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -18,6 +18,8 @@ import { useTimerStore } from "@/store/useTimerStore"
 type SetupStatus = "idle" | "creating-sheet" | "initial-sync" | "error"
 type SyncStatus = "idle" | "syncing" | "success" | "error"
 
+const MANUAL_SYNC_DEBOUNCE_MS = 2000
+
 interface GoogleOAuthModalProps {
   open: boolean
   onClose: () => void
@@ -36,6 +38,31 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
   const [setupStatus, setSetupStatus] = useState<SetupStatus>("idle")
   const [loginError, setLoginError] = useState(false)
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle")
+  const [isManualDebouncing, setIsManualDebouncing] = useState(false)
+
+  const mountedRef = useRef(true)
+  const manualSyncDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+      if (manualSyncDebounceRef.current !== null) {
+        clearTimeout(manualSyncDebounceRef.current)
+        manualSyncDebounceRef.current = null
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!open) {
+      if (manualSyncDebounceRef.current !== null) {
+        clearTimeout(manualSyncDebounceRef.current)
+        manualSyncDebounceRef.current = null
+      }
+      setIsManualDebouncing(false)
+    }
+  }, [open])
 
   const isConnected = !!googleAccessToken && setupStatus === "idle"
   const isSettingUp = setupStatus === "creating-sheet" || setupStatus === "initial-sync"
@@ -83,14 +110,25 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
     setSyncStatus("idle")
   }
 
-  const handleManualSync = async () => {
-    if (!googleAccessToken || !spreadsheetId) return
+  const flushManualSync = async () => {
+    if (!mountedRef.current) return
+    setIsManualDebouncing(false)
+    const s = useTimerStore.getState()
+    if (!s.googleAccessToken || !s.spreadsheetId) return
     setSyncStatus("syncing")
     try {
-      await syncLogsToSheet(records, googleAccessToken, spreadsheetId, hourlyRate, currency)
+      await syncLogsToSheet(
+        s.records,
+        s.googleAccessToken,
+        s.spreadsheetId,
+        s.hourlyRate,
+        s.currency,
+      )
+      if (!mountedRef.current) return
       setSyncStatus("success")
       toast.success(t("toast.sync_success"))
     } catch (err) {
+      if (!mountedRef.current) return
       setSyncStatus("error")
       if (err instanceof GoogleSheetsError && err.status >= 400 && err.status < 500) {
         setGoogleAccessToken(null)
@@ -101,15 +139,36 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
     }
   }
 
+  const scheduleManualSync = () => {
+    if (manualSyncDebounceRef.current !== null) {
+      clearTimeout(manualSyncDebounceRef.current)
+    }
+    setIsManualDebouncing(true)
+    manualSyncDebounceRef.current = setTimeout(() => {
+      manualSyncDebounceRef.current = null
+      void flushManualSync()
+    }, MANUAL_SYNC_DEBOUNCE_MS)
+  }
+
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
       if (!isSettingUp) {
         setSyncStatus("idle")
         if (setupStatus === "error") setSetupStatus("idle")
+        if (manualSyncDebounceRef.current !== null) {
+          clearTimeout(manualSyncDebounceRef.current)
+          manualSyncDebounceRef.current = null
+        }
+        setIsManualDebouncing(false)
         onClose()
       }
     }
   }
+
+  const manualSyncDisabled =
+    syncStatus === "syncing" ||
+    isManualDebouncing ||
+    records.length === 0
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -200,19 +259,25 @@ export function GoogleOAuthModal({ open, onClose }: GoogleOAuthModalProps) {
           {isConnected && !!spreadsheetId && (
             <Button
               variant="outline"
-              onClick={handleManualSync}
-              disabled={syncStatus === "syncing" || records.length === 0}
+              onClick={scheduleManualSync}
+              disabled={manualSyncDisabled}
               className="w-full gap-2 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700
                 dark:text-green-400 dark:border-green-800 dark:hover:bg-green-900/20 dark:hover:text-green-300"
             >
-              {syncStatus === "syncing" && <Loader2 className="size-3.5 animate-spin" />}
-              {syncStatus === "success" && <CheckCircle2 className="size-3.5" />}
-              {syncStatus === "error" && <AlertCircle className="size-3.5" />}
-              {syncStatus === "idle" && <RefreshCw className="size-3.5" />}
+              {syncStatus === "syncing" && <Loader2 className="size-3.5 shrink-0 animate-spin" />}
+              {syncStatus === "success" && <CheckCircle2 className="size-3.5 shrink-0" />}
+              {syncStatus === "error" && <AlertCircle className="size-3.5 shrink-0" />}
+              {syncStatus === "idle" && !isManualDebouncing && (
+                <RefreshCw className="size-3.5 shrink-0" />
+              )}
+              {isManualDebouncing && syncStatus === "idle" && (
+                <Loader2 className="size-3.5 shrink-0 animate-spin text-muted-foreground" />
+              )}
               {syncStatus === "syncing" && t("sync.syncing")}
               {syncStatus === "success" && t("sync.synced")}
               {syncStatus === "error" && t("sync.sync_failed_retry")}
-              {syncStatus === "idle" && t("sync.sync_all", { count: records.length })}
+              {syncStatus === "idle" && isManualDebouncing && t("sync.sync_pending")}
+              {syncStatus === "idle" && !isManualDebouncing && t("sync.sync_all", { count: records.length })}
             </Button>
           )}
           {!isSettingUp && (
