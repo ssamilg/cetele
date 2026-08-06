@@ -4,6 +4,23 @@ function appLocale(): string {
   return i18n.language?.startsWith("tr") ? "tr-TR" : "en-US"
 }
 
+export function toDateKey(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, "0")
+  const d = String(date.getDate()).padStart(2, "0")
+  return `${y}-${m}-${d}`
+}
+
+export function todayDateKey(): string {
+  return toDateKey(new Date())
+}
+
+export const ALL_DAYS_KEY = "all"
+
+export function isSameDay(a: Date, b: Date): boolean {
+  return toDateKey(a) === toDateKey(b)
+}
+
 export function formatTime(date: Date): string {
   return date.toLocaleTimeString(appLocale(), {
     hour: "2-digit",

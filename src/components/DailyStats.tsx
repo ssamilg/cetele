@@ -1,21 +1,12 @@
 import { Clock, ListChecks } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Card, CardContent } from "@/components/ui/card"
-import { formatDuration } from "@/lib/formatters"
+import { ALL_DAYS_KEY, formatDate, formatDuration, toDateKey, todayDateKey } from "@/lib/formatters"
 import { useTimerStore, CURRENCY_SYMBOLS } from "@/store/useTimerStore"
 import type { Currency } from "@/store/useTimerStore"
 import { cn } from "@/lib/utils"
 
-function isToday(date: Date): boolean {
-  const now = new Date()
-  return (
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate()
-  )
-}
-
-function formatEarnedToday(totalSeconds: number, hourlyRate: number, currency: Currency): string {
+function formatEarned(totalSeconds: number, hourlyRate: number, currency: Currency): string {
   const amount = (totalSeconds / 3600) * hourlyRate
   const formatted = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
@@ -49,15 +40,43 @@ function StatCard({ icon, label, value, iconClassName }: StatCardProps) {
   )
 }
 
-export function DailyStats() {
+interface DailyStatsProps {
+  selectedDayKey: string
+}
+
+export function DailyStats({ selectedDayKey }: DailyStatsProps) {
   const { t } = useTranslation()
   const records = useTimerStore((s) => s.records)
   const hourlyRate = useTimerStore((s) => s.hourlyRate)
   const currency = useTimerStore((s) => s.currency)
 
-  const todayRecords = records.filter((r) => isToday(r.startTime))
-  const totalSeconds = todayRecords.reduce((sum, r) => sum + r.duration, 0)
-  const taskCount = todayRecords.length
+  const filteredRecords = selectedDayKey === ALL_DAYS_KEY
+    ? records
+    : records.filter((r) => toDateKey(r.startTime) === selectedDayKey)
+
+  const totalSeconds = filteredRecords.reduce((sum, r) => sum + r.duration, 0)
+  const taskCount = filteredRecords.length
+
+  const todayKey = todayDateKey()
+  let hoursLabel = t("stats.hours")
+  let tasksLabel = t("stats.tasks")
+  let earnedLabel = t("stats.earned")
+
+  if (selectedDayKey === ALL_DAYS_KEY) {
+    hoursLabel = t("stats.hours_all")
+    tasksLabel = t("stats.tasks_all")
+    earnedLabel = t("stats.earned_all")
+  } else if (selectedDayKey === todayKey) {
+    hoursLabel = t("stats.hours_today")
+    tasksLabel = t("stats.tasks_today")
+    earnedLabel = t("stats.earned_today")
+  } else {
+    const [y, m, d] = selectedDayKey.split("-").map(Number)
+    const dayLabel = formatDate(new Date(y, m - 1, d))
+    hoursLabel = t("stats.hours_day", { date: dayLabel })
+    tasksLabel = t("stats.tasks_day", { date: dayLabel })
+    earnedLabel = t("stats.earned_day", { date: dayLabel })
+  }
 
   return (
     <div
@@ -68,21 +87,21 @@ export function DailyStats() {
     >
       <StatCard
         icon={<Clock className="size-5" />}
-        label={t("stats.hours_today")}
+        label={hoursLabel}
         value={totalSeconds > 0 ? formatDuration(totalSeconds) : "—"}
         iconClassName="bg-primary/10 text-primary"
       />
       <StatCard
         icon={<ListChecks className="size-5" />}
-        label={t("stats.tasks_today")}
+        label={tasksLabel}
         value={taskCount > 0 ? String(taskCount) : "—"}
         iconClassName="bg-blue-500/10 text-blue-500"
       />
       {hourlyRate > 0 && (
         <StatCard
           icon={<span className="text-lg font-semibold leading-none">{CURRENCY_SYMBOLS[currency]}</span>}
-          label={t("stats.earned_today")}
-          value={totalSeconds > 0 ? formatEarnedToday(totalSeconds, hourlyRate, currency) : "—"}
+          label={earnedLabel}
+          value={totalSeconds > 0 ? formatEarned(totalSeconds, hourlyRate, currency) : "—"}
           iconClassName="bg-green-500/10 text-green-500"
         />
       )}

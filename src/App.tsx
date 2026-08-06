@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -7,11 +7,13 @@ import { Navbar } from "@/components/timer/Navbar"
 import { TaskFormModal } from "@/components/timer/TaskFormModal"
 import { GoogleOAuthModal } from "@/components/sync/GoogleOAuthModal"
 import { DailyStats } from "@/components/DailyStats"
+import { DayFilter } from "@/components/DayFilter"
 import { WorkLogTable } from "@/components/table/WorkLogTable"
 import { LandingPage } from "@/components/LandingPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { exportToCsv } from "@/lib/exporters"
+import { ALL_DAYS_KEY, toDateKey, todayDateKey } from "@/lib/formatters"
 import {
   useTimerStore,
   CURRENCY_SYMBOLS,
@@ -51,12 +53,35 @@ export function App() {
   const [googleModalOpen, setGoogleModalOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<TimeRecord | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
+  const [selectedDayKey, setSelectedDayKey] = useState(ALL_DAYS_KEY)
+
+  const filteredRecords = useMemo(
+    () =>
+      selectedDayKey === ALL_DAYS_KEY
+        ? records
+        : records.filter((r) => toDateKey(r.startTime) === selectedDayKey),
+    [records, selectedDayKey],
+  )
 
   useEffect(() => {
     return () => {
       cancelDebouncedBackgroundSheetSync()
     }
   }, [])
+
+  useEffect(() => {
+    if (selectedDayKey === ALL_DAYS_KEY) {
+      return
+    }
+    const todayKey = todayDateKey()
+    if (selectedDayKey === todayKey) {
+      return
+    }
+    const hasDay = records.some((r) => toDateKey(r.startTime) === selectedDayKey)
+    if (!hasDay) {
+      setSelectedDayKey(ALL_DAYS_KEY)
+    }
+  }, [records, selectedDayKey])
 
   const handleStartStopClick = () => {
     if (isRunning && activeTask) {
@@ -180,8 +205,29 @@ export function App() {
             </div>
           </div>
 
-          <DailyStats />
-          <WorkLogTable entries={records} onEdit={handleEditEntry} hourlyRate={hourlyRate} />
+          <DailyStats selectedDayKey={selectedDayKey} />
+          <div className="flex flex-col gap-3">
+            <DayFilter
+              records={records}
+              selectedDayKey={selectedDayKey}
+              onSelectDay={setSelectedDayKey}
+            />
+            <WorkLogTable
+              entries={filteredRecords}
+              onEdit={handleEditEntry}
+              hourlyRate={hourlyRate}
+              emptyTitle={
+                selectedDayKey !== ALL_DAYS_KEY && records.length > 0
+                  ? t("day_filter.empty_day_title")
+                  : undefined
+              }
+              emptyDescription={
+                selectedDayKey !== ALL_DAYS_KEY && records.length > 0
+                  ? t("day_filter.empty_day_desc")
+                  : undefined
+              }
+            />
+          </div>
         </div>
       </main>
 

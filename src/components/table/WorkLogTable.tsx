@@ -1,3 +1,4 @@
+import { Fragment } from "react"
 import { Clock, FileText } from "lucide-react"
 import {
   Table,
@@ -11,7 +12,14 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 import { useTranslation } from "react-i18next"
-import { formatDuration, formatSessionDateRange, formatTimeShort } from "@/lib/formatters"
+import {
+  formatDate,
+  formatDuration,
+  formatSessionDateRange,
+  formatTimeShort,
+  toDateKey,
+  todayDateKey,
+} from "@/lib/formatters"
 import { useTimerStore, CURRENCY_SYMBOLS } from "@/store/useTimerStore"
 import type { TimeRecord } from "@/types"
 import type { Currency } from "@/store/useTimerStore"
@@ -20,6 +28,15 @@ interface WorkLogTableProps {
   entries: TimeRecord[]
   onEdit: (entry: TimeRecord) => void
   hourlyRate?: number
+  emptyTitle?: string
+  emptyDescription?: string
+}
+
+interface DayGroup {
+  key: string
+  date: Date
+  entries: TimeRecord[]
+  totalSeconds: number
 }
 
 function formatEarned(totalSeconds: number, hourlyRate: number, currency: Currency): string {
@@ -31,9 +48,42 @@ function formatEarned(totalSeconds: number, hourlyRate: number, currency: Curren
   return `${CURRENCY_SYMBOLS[currency]}${formatted}`
 }
 
-export function WorkLogTable({ entries, onEdit, hourlyRate = 0 }: WorkLogTableProps) {
+function groupEntriesByDay(entries: TimeRecord[]): DayGroup[] {
+  const groups = new Map<string, DayGroup>()
+
+  for (const entry of entries.slice().reverse()) {
+    const key = toDateKey(entry.startTime)
+    const existing = groups.get(key)
+    if (existing) {
+      existing.entries.push(entry)
+      existing.totalSeconds += entry.duration
+    } else {
+      groups.set(key, {
+        key,
+        date: new Date(
+          entry.startTime.getFullYear(),
+          entry.startTime.getMonth(),
+          entry.startTime.getDate(),
+        ),
+        entries: [entry],
+        totalSeconds: entry.duration,
+      })
+    }
+  }
+
+  return Array.from(groups.values())
+}
+
+export function WorkLogTable({
+  entries,
+  onEdit,
+  hourlyRate = 0,
+  emptyTitle,
+  emptyDescription,
+}: WorkLogTableProps) {
   const { t } = useTranslation()
   const currency = useTimerStore((s) => s.currency)
+  const todayKey = todayDateKey()
 
   if (entries.length === 0) {
     return (
@@ -42,13 +92,14 @@ export function WorkLogTable({ entries, onEdit, hourlyRate = 0 }: WorkLogTablePr
           <EmptyMedia variant="icon">
             <Clock />
           </EmptyMedia>
-          <EmptyTitle>{t("table.empty_title")}</EmptyTitle>
-          <EmptyDescription>{t("table.empty_desc")}</EmptyDescription>
+          <EmptyTitle>{emptyTitle ?? t("table.empty_title")}</EmptyTitle>
+          <EmptyDescription>{emptyDescription ?? t("table.empty_desc")}</EmptyDescription>
         </EmptyHeader>
       </Empty>
     )
   }
 
+  const dayGroups = groupEntriesByDay(entries)
   const totalSeconds = entries.reduce((sum, e) => sum + e.duration, 0)
 
   return (
@@ -68,57 +119,92 @@ export function WorkLogTable({ entries, onEdit, hourlyRate = 0 }: WorkLogTablePr
           </TableRow>
         </TableHeader>
         <TableBody>
-          {entries.slice().reverse().map((entry) => (
-            <TableRow
-              key={entry.id}
-              className="group cursor-pointer hover:bg-muted/50"
-              onClick={() => onEdit(entry)}
-            >
-              <TableCell className="py-4">
-                <div className="flex items-center gap-2">
-                  <div className="flex size-2 shrink-0 rounded-full bg-primary/70" />
-                  <span className="font-medium text-sm">{entry.taskName}</span>
-                </div>
-              </TableCell>
-              <TableCell className="py-4">
-                {entry.description ? (
-                  <span className="text-sm line-clamp-2 max-w-72">
-                    {entry.description}
-                  </span>
-                ) : (
-                  <span className="text-sm text-muted-foreground/80 flex items-center gap-1">
-                    <FileText className="size-3" />
-                    {t("table.no_description")}
-                  </span>
-                )}
-              </TableCell>
-              <TableCell className="text-sm py-4 text-muted-foreground">
-                {formatSessionDateRange(entry.startTime, entry.endTime)}
-              </TableCell>
-              <TableCell className="text-sm py-4 font-mono tabular-nums">
-                {formatTimeShort(entry.startTime)}
-              </TableCell>
-              <TableCell className="text-sm py-4 font-mono tabular-nums">
-                {formatTimeShort(entry.endTime)}
-              </TableCell>
-              <TableCell className="py-4">
-                <Badge variant="secondary" className="font-mono text-xs">
-                  {formatDuration(entry.duration)}
-                </Badge>
-              </TableCell>
-              {hourlyRate > 0 && (
-                <TableCell className="py-4">
-                  <Badge
-                    variant="outline"
-                    className="font-mono text-xs text-green-600 border-green-300
-                      dark:text-green-400 dark:border-green-800"
+          {dayGroups.map((group) => {
+            const dayLabel = group.key === todayKey
+              ? t("day_filter.today")
+              : formatDate(group.date)
+
+            return (
+              <Fragment key={group.key}>
+                <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border">
+                  <TableCell className="py-2" />
+                  <TableCell className="py-2" />
+                  <TableCell className="py-2 text-xs font-medium text-foreground">
+                    {dayLabel}
+                  </TableCell>
+                  <TableCell className="py-2" />
+                  <TableCell className="py-2" />
+                  <TableCell className="py-2">
+                    <Badge variant="outline" className="font-mono text-xs">
+                      {formatDuration(group.totalSeconds)}
+                    </Badge>
+                  </TableCell>
+                  {hourlyRate > 0 && (
+                    <TableCell className="py-2">
+                      <Badge
+                        variant="outline"
+                        className="font-mono text-xs text-green-600 border-green-300
+                          dark:text-green-400 dark:border-green-800"
+                      >
+                        {formatEarned(group.totalSeconds, hourlyRate, currency)}
+                      </Badge>
+                    </TableCell>
+                  )}
+                </TableRow>
+                {group.entries.map((entry) => (
+                  <TableRow
+                    key={entry.id}
+                    className="group cursor-pointer hover:bg-muted/50"
+                    onClick={() => onEdit(entry)}
                   >
-                    {formatEarned(entry.duration, hourlyRate, currency)}
-                  </Badge>
-                </TableCell>
-              )}
-            </TableRow>
-          ))}
+                    <TableCell className="py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="flex size-2 shrink-0 rounded-full bg-primary/70" />
+                        <span className="font-medium text-sm">{entry.taskName}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4">
+                      {entry.description ? (
+                        <span className="text-sm line-clamp-2 max-w-72">
+                          {entry.description}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-muted-foreground/80 flex items-center gap-1">
+                          <FileText className="size-3" />
+                          {t("table.no_description")}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm py-4 text-muted-foreground">
+                      {formatSessionDateRange(entry.startTime, entry.endTime)}
+                    </TableCell>
+                    <TableCell className="text-sm py-4 font-mono tabular-nums">
+                      {formatTimeShort(entry.startTime)}
+                    </TableCell>
+                    <TableCell className="text-sm py-4 font-mono tabular-nums">
+                      {formatTimeShort(entry.endTime)}
+                    </TableCell>
+                    <TableCell className="py-4">
+                      <Badge variant="secondary" className="font-mono text-xs">
+                        {formatDuration(entry.duration)}
+                      </Badge>
+                    </TableCell>
+                    {hourlyRate > 0 && (
+                      <TableCell className="py-4">
+                        <Badge
+                          variant="outline"
+                          className="font-mono text-xs text-green-600 border-green-300
+                            dark:text-green-400 dark:border-green-800"
+                        >
+                          {formatEarned(entry.duration, hourlyRate, currency)}
+                        </Badge>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </Fragment>
+            )
+          })}
         </TableBody>
         <TableFooter>
           <TableRow className="bg-muted/20 hover:bg-muted/20">
