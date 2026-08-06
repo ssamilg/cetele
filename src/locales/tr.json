@@ -38,9 +38,24 @@
     "footer_with_love": "❤️ ile"
   },
   "stats": {
+    "hours": "Süre",
+    "tasks": "Görev",
+    "earned": "Kazanç",
     "hours_today": "Bugünkü Süre",
     "tasks_today": "Bugünkü Görev",
-    "earned_today": "Bugünkü Kazanç"
+    "earned_today": "Bugünkü Kazanç",
+    "hours_all": "Toplam Süre",
+    "tasks_all": "Toplam Görev",
+    "earned_all": "Toplam Kazanç",
+    "hours_day": "Süre · {{date}}",
+    "tasks_day": "Görev · {{date}}",
+    "earned_day": "Kazanç · {{date}}"
+  },
+  "day_filter": {
+    "all": "Tümü",
+    "today": "Bugün",
+    "empty_day_title": "Bu gün için kayıt yok",
+    "empty_day_desc": "Başka bir gün seçin veya zaman kaydetmeye başlayın."
   },
   "table": {
     "col_task": "Görev",

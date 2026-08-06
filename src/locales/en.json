@@ -38,9 +38,24 @@
     "footer_with_love": "with ❤️"
   },
   "stats": {
+    "hours": "Hours",
+    "tasks": "Tasks",
+    "earned": "Earned",
     "hours_today": "Hours Today",
     "tasks_today": "Tasks Today",
-    "earned_today": "Earned Today"
+    "earned_today": "Earned Today",
+    "hours_all": "Total Hours",
+    "tasks_all": "Total Tasks",
+    "earned_all": "Total Earned",
+    "hours_day": "Hours · {{date}}",
+    "tasks_day": "Tasks · {{date}}",
+    "earned_day": "Earned · {{date}}"
+  },
+  "day_filter": {
+    "all": "All",
+    "today": "Today",
+    "empty_day_title": "No entries for this day",
+    "empty_day_desc": "Pick another day or start tracking to log time."
   },
   "table": {
     "col_task": "Task",
