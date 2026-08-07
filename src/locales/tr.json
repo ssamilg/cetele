@@ -16,7 +16,8 @@
   "nav": {
     "start": "Başlat",
     "stop": "Durdur",
-    "manual_entry_aria": "Zamanı manuel kaydet"
+    "manual_entry_aria": "Zamanı manuel kaydet",
+    "edit_active_aria": "Aktif oturumu düzenle"
   },
   "settings": {
     "aria": "Ayarlar",
@@ -59,6 +60,9 @@
     "empty_day_title": "Bu gün için kayıt yok",
     "empty_day_desc": "Başka bir gün seçin veya zaman kaydetmeye başlayın."
   },
+  "timer": {
+    "default_title": "{{time}} Oturum"
+  },
   "type": {
     "label": "Tür",
     "work": "İş",
@@ -80,8 +84,10 @@
     "entry_count_other": "{{count}} kayıt"
   },
   "modal": {
-    "start_title": "Yeni Görev Başlat",
-    "start_desc": "Zamanı takip etmeye başlamak için görev detaylarını girin.",
+    "active_title": "Oturumu Düzenle",
+    "active_desc": "Sayaç çalışmaya devam ederken başlık, açıklama veya türü güncelleyin.",
+    "stop_title": "Oturumu Durdur",
+    "stop_desc": "Kaydetmeden önce detayları ve zamanları gözden geçirin.",
     "edit_title": "Kaydı Düzenle",
     "edit_desc": "Bu zaman kaydı için görev detaylarını güncelleyin.",
     "manual_title": "Manuel Zaman Ekle",
@@ -102,7 +108,7 @@
     "btn_cancel": "İptal",
     "btn_delete": "Sil",
     "btn_save": "Değişiklikleri Kaydet",
-    "btn_start": "Sayacı Başlat",
+    "btn_stop_save": "Kaydet",
     "btn_log": "Kaydet",
     "delete_confirm_title": "Kayıt silinsin mi?",
     "delete_confirm_desc": "Bu zaman kaydını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.",

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Play, Pencil, Trash2, Clock, TimerIcon } from "lucide-react"
+import { Pencil, Trash2, Clock, TimerIcon, Square } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -34,12 +34,15 @@ import {
   type TimeRecord,
 } from "@/types"
 
+type TaskFormMode = "active" | "edit" | "manual" | "stop"
+
 interface TaskFormModalProps {
   open: boolean
-  mode: "start" | "edit" | "manual"
+  mode: TaskFormMode
   entry?: TimeRecord | null
-  onStart?: (taskName: string, description: string, type: RecordType) => void
+  onSaveActive?: (taskName: string, description: string, type: RecordType) => void
   onSave?: (entry: TimeRecord) => void
+  onStop?: (entry: TimeRecord) => void
   onDelete?: (id: string) => void
   onCancel: () => void
 }
@@ -65,15 +68,18 @@ export function TaskFormModal({
   open,
   mode,
   entry,
-  onStart,
+  onSaveActive,
   onSave,
+  onStop,
   onDelete,
   onCancel,
 }: TaskFormModalProps) {
   const { t } = useTranslation()
+  const isActive = mode === "active"
   const isEdit = mode === "edit"
   const isManual = mode === "manual"
-  const isEditLike = isEdit || isManual
+  const isStop = mode === "stop"
+  const showTimes = isEdit || isManual || isStop
 
   const QUICK_SPANS = [
     { label: t("modal.quick_5min"), minutes: 5 },
@@ -95,7 +101,7 @@ export function TaskFormModal({
     if (!open) {
       return
     }
-    if (isEdit && entry) {
+    if ((isEdit || isStop || isActive) && entry) {
       setTitle(entry.taskName)
       setDescription(entry.description)
       setRecordType(normalizeRecordType(entry.type))
@@ -114,17 +120,13 @@ export function TaskFormModal({
       setStartTimeInput(toTimeInputValue(oneHourAgo))
       setEndDateInput(toDateInputValue(now))
       setEndTimeInput(toTimeInputValue(now))
-    } else {
-      setTitle("")
-      setDescription("")
-      setRecordType(DEFAULT_RECORD_TYPE)
     }
-  }, [open, isEdit, isManual, entry])
+  }, [open, isEdit, isManual, isStop, isActive, entry])
 
-  const editedStartTime = isEditLike ? combineDateTime(startDateInput, startTimeInput) : null
-  const editedEndTime = isEditLike ? combineDateTime(endDateInput, endTimeInput) : null
+  const editedStartTime = showTimes ? combineDateTime(startDateInput, startTimeInput) : null
+  const editedEndTime = showTimes ? combineDateTime(endDateInput, endTimeInput) : null
   const isTimeValid =
-    !isEditLike ||
+    !showTimes ||
     (editedStartTime !== null &&
       editedEndTime !== null &&
       editedEndTime.getTime() > editedStartTime.getTime())
@@ -147,8 +149,18 @@ export function TaskFormModal({
     if (!title.trim() || !isTimeValid) {
       return
     }
-    if (mode === "start") {
-      onStart?.(title.trim(), description.trim(), recordType)
+    if (isActive) {
+      onSaveActive?.(title.trim(), description.trim(), recordType)
+    } else if (isStop && entry && editedStartTime && editedEndTime) {
+      onStop?.({
+        ...entry,
+        taskName: title.trim(),
+        description: description.trim(),
+        type: recordType,
+        startTime: editedStartTime,
+        endTime: editedEndTime,
+        duration: editedDuration,
+      })
     } else if (isEdit && entry && editedStartTime && editedEndTime) {
       onSave?.({
         ...entry,
@@ -185,6 +197,14 @@ export function TaskFormModal({
         <DialogContent className="gap-6 md:max-w-md sm:p-7">
           <DialogHeader className="gap-3">
             <DialogTitle className="flex items-center gap-3 text-left">
+              {isActive && (
+                <>
+                  <div className="flex size-9 items-center justify-center rounded-xl text-primary">
+                    <Pencil className="size-4" />
+                  </div>
+                  {t("modal.active_title")}
+                </>
+              )}
               {isEdit && (
                 <>
                   <div className="flex size-9 items-center justify-center rounded-xl text-primary">
@@ -201,19 +221,20 @@ export function TaskFormModal({
                   {t("modal.manual_title")}
                 </>
               )}
-              {mode === "start" && (
+              {isStop && (
                 <>
                   <div className="flex size-9 items-center justify-center rounded-xl text-primary">
-                    <Play className="size-4 fill-primary" />
+                    <Square className="size-4 fill-primary" />
                   </div>
-                  {t("modal.start_title")}
+                  {t("modal.stop_title")}
                 </>
               )}
             </DialogTitle>
             <DialogDescription className="text-left text-sm leading-relaxed">
+              {isActive && t("modal.active_desc")}
               {isEdit && t("modal.edit_desc")}
               {isManual && t("modal.manual_desc")}
-              {mode === "start" && t("modal.start_desc")}
+              {isStop && t("modal.stop_desc")}
             </DialogDescription>
           </DialogHeader>
 
@@ -235,7 +256,7 @@ export function TaskFormModal({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") handleSubmit() }}
-                  autoFocus={!isEdit}
+                  autoFocus
                   className="h-11 text-base"
                 />
               </div>
@@ -255,7 +276,7 @@ export function TaskFormModal({
               </div>
             </div>
 
-            {isEditLike && (
+            {showTimes && (
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-sm font-medium text-foreground">
@@ -363,6 +384,12 @@ export function TaskFormModal({
               disabled={!title.trim() || !isTimeValid}
               className="gap-1.5"
             >
+              {isActive && (
+                <>
+                  <Pencil className="size-3.5" />
+                  {t("modal.btn_save")}
+                </>
+              )}
               {isEdit && (
                 <>
                   <Pencil className="size-3.5" />
@@ -375,10 +402,10 @@ export function TaskFormModal({
                   {t("modal.btn_log")}
                 </>
               )}
-              {mode === "start" && (
+              {isStop && (
                 <>
-                  <Play className="size-3.5 fill-current" />
-                  {t("modal.btn_start")}
+                  <Square className="size-3.5 fill-current" />
+                  {t("modal.btn_stop_save")}
                 </>
               )}
             </Button>

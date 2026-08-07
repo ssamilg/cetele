@@ -29,8 +29,15 @@ interface PrefsStoreState {
 type PersistedState = TimerStoreState & Pick<SyncStoreState, "spreadsheetId"> & PrefsStoreState
 
 interface TimerStoreActions {
-  startTimer: (taskName: string, description: string, type?: RecordType) => void
-  stopTimer: (taskName: string, description: string, type?: RecordType) => void
+  startTimer: (taskName: string, description?: string, type?: RecordType) => void
+  updateActiveTask: (taskName: string, description: string, type: RecordType) => void
+  stopTimer: (details: {
+    taskName: string
+    description: string
+    type: RecordType
+    startTime: Date
+    endTime: Date
+  }) => void
   addEntry: (entry: TimeRecord) => void
   updateEntry: (entry: TimeRecord) => void
   deleteEntry: (id: string) => void
@@ -104,7 +111,7 @@ export const useTimerStore = create<TimerStore>()(
       hourlyRate: 0,
       currency: "USD" as Currency,
 
-      startTimer: (taskName, description, type = "work") => {
+      startTimer: (taskName, description = "", type = "work") => {
         const activeTask: ActiveTask = {
           taskName,
           description,
@@ -114,20 +121,40 @@ export const useTimerStore = create<TimerStore>()(
         set({ timer: { isRunning: true, activeTask } })
       },
 
-      stopTimer: (taskName, description, type) => {
+      updateActiveTask: (taskName, description, type) => {
         const state = get()
-        if (!state.timer.activeTask) return
+        if (!state.timer.activeTask) {
+          return
+        }
+        set({
+          timer: {
+            isRunning: true,
+            activeTask: {
+              ...state.timer.activeTask,
+              taskName,
+              description,
+              type: normalizeRecordType(type),
+            },
+          },
+        })
+      },
 
-        const endTime = new Date()
-        const duration = Math.floor(
-          (endTime.getTime() - state.timer.activeTask.startTime.getTime()) / 1000,
+      stopTimer: ({ taskName, description, type, startTime, endTime }) => {
+        const state = get()
+        if (!state.timer.activeTask) {
+          return
+        }
+
+        const duration = Math.max(
+          0,
+          Math.floor((endTime.getTime() - startTime.getTime()) / 1000),
         )
         const entry: TimeRecord = {
           id: crypto.randomUUID(),
           taskName,
           description,
-          type: normalizeRecordType(type ?? state.timer.activeTask.type),
-          startTime: state.timer.activeTask.startTime,
+          type: normalizeRecordType(type),
+          startTime,
           endTime,
           duration,
         }

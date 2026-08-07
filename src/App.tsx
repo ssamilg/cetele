@@ -13,13 +13,13 @@ import { LandingPage } from "@/components/LandingPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { exportToCsv } from "@/lib/exporters"
-import { ALL_DAYS_KEY, toDateKey, todayDateKey } from "@/lib/formatters"
+import { ALL_DAYS_KEY, formatTimeShort, toDateKey, todayDateKey } from "@/lib/formatters"
 import {
   useTimerStore,
   CURRENCY_SYMBOLS,
   cancelDebouncedBackgroundSheetSync,
 } from "@/store/useTimerStore"
-import type { RecordType, TimeRecord } from "@/types"
+import type { TimeRecord } from "@/types"
 
 const APP_ENTERED_STORAGE_KEY = "cetele-app-entered"
 
@@ -38,6 +38,7 @@ export function App() {
   const isRunning = useTimerStore((s) => s.timer.isRunning)
   const activeTask = useTimerStore((s) => s.timer.activeTask)
   const startTimer = useTimerStore((s) => s.startTimer)
+  const updateActiveTask = useTimerStore((s) => s.updateActiveTask)
   const stopTimer = useTimerStore((s) => s.stopTimer)
   const addEntry = useTimerStore((s) => s.addEntry)
   const updateEntry = useTimerStore((s) => s.updateEntry)
@@ -48,7 +49,9 @@ export function App() {
 
   const { t } = useTranslation()
   const [isAppEntered, setIsAppEntered] = useState(readAppEnteredFromStorage)
-  const [taskModalOpen, setTaskModalOpen] = useState(false)
+  const [activeModalOpen, setActiveModalOpen] = useState(false)
+  const [stopModalOpen, setStopModalOpen] = useState(false)
+  const [stoppingEntry, setStoppingEntry] = useState<TimeRecord | null>(null)
   const [manualModalOpen, setManualModalOpen] = useState(false)
   const [googleModalOpen, setGoogleModalOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<TimeRecord | null>(null)
@@ -83,17 +86,61 @@ export function App() {
     }
   }, [records, selectedDayKey])
 
+  useEffect(() => {
+    if (!isRunning) {
+      setActiveModalOpen(false)
+    }
+  }, [isRunning])
+
   const handleStartStopClick = () => {
     if (isRunning && activeTask) {
-      stopTimer(activeTask.taskName, activeTask.description, activeTask.type)
+      const endTime = new Date()
+      const startTime = activeTask.startTime
+      setStoppingEntry({
+        id: crypto.randomUUID(),
+        taskName: activeTask.taskName,
+        description: activeTask.description,
+        type: activeTask.type,
+        startTime,
+        endTime,
+        duration: Math.max(0, Math.floor((endTime.getTime() - startTime.getTime()) / 1000)),
+      })
+      setActiveModalOpen(false)
+      setStopModalOpen(true)
     } else {
-      setTaskModalOpen(true)
+      const now = new Date()
+      startTimer(t("timer.default_title", { time: formatTimeShort(now) }))
     }
   }
 
-  const handleStart = (taskName: string, description: string, type: RecordType) => {
-    startTimer(taskName, description, type)
-    setTaskModalOpen(false)
+  const handleEditActive = () => {
+    if (!activeTask) {
+      return
+    }
+    setStopModalOpen(false)
+    setActiveModalOpen(true)
+  }
+
+  const handleSaveActive = (taskName: string, description: string, type: TimeRecord["type"]) => {
+    updateActiveTask(taskName, description, type)
+    setActiveModalOpen(false)
+  }
+
+  const handleConfirmStop = (entry: TimeRecord) => {
+    stopTimer({
+      taskName: entry.taskName,
+      description: entry.description,
+      type: entry.type,
+      startTime: entry.startTime,
+      endTime: entry.endTime,
+    })
+    setStopModalOpen(false)
+    setStoppingEntry(null)
+  }
+
+  const handleCancelStop = () => {
+    setStopModalOpen(false)
+    setStoppingEntry(null)
   }
 
   const handleEditEntry = (entry: TimeRecord) => {
@@ -117,6 +164,18 @@ export function App() {
     addEntry(entry)
     setManualModalOpen(false)
   }
+
+  const activeDraft: TimeRecord | null = activeTask
+    ? {
+        id: "active-draft",
+        taskName: activeTask.taskName,
+        description: activeTask.description,
+        type: activeTask.type,
+        startTime: activeTask.startTime,
+        endTime: activeTask.startTime,
+        duration: 0,
+      }
+    : null
 
   const handleLandingEnter = () => {
     try {
@@ -146,7 +205,11 @@ export function App() {
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="min-h-svh bg-background flex flex-col"
         >
-      <Navbar onStartStop={handleStartStopClick} onManualEntry={() => setManualModalOpen(true)} />
+      <Navbar
+        onStartStop={handleStartStopClick}
+        onManualEntry={() => setManualModalOpen(true)}
+        onEditActive={handleEditActive}
+      />
 
       <main className="mx-auto flex w-full min-w-0 max-w-6xl flex-1 flex-col px-4 py-6 pb-16 md:px-6 md:pt-8">
         <div className="flex flex-1 flex-col gap-6">
@@ -249,10 +312,19 @@ export function App() {
       </main>
 
       <TaskFormModal
-        open={taskModalOpen}
-        mode="start"
-        onStart={handleStart}
-        onCancel={() => setTaskModalOpen(false)}
+        open={activeModalOpen}
+        mode="active"
+        entry={activeDraft}
+        onSaveActive={handleSaveActive}
+        onCancel={() => setActiveModalOpen(false)}
+      />
+
+      <TaskFormModal
+        open={stopModalOpen}
+        mode="stop"
+        entry={stoppingEntry}
+        onStop={handleConfirmStop}
+        onCancel={handleCancelStop}
       />
 
       <TaskFormModal

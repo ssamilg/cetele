@@ -12,9 +12,10 @@ import { cn } from "@/lib/utils"
 interface NavbarProps {
   onStartStop: () => void
   onManualEntry: () => void
+  onEditActive?: () => void
 }
 
-export function Navbar({ onStartStop, onManualEntry }: NavbarProps) {
+export function Navbar({ onStartStop, onManualEntry, onEditActive }: NavbarProps) {
   const { t } = useTranslation()
   const isRunning = useTimerStore((s) => s.timer.isRunning)
   const activeTask = useTimerStore((s) => s.timer.activeTask)
@@ -41,15 +42,32 @@ export function Navbar({ onStartStop, onManualEntry }: NavbarProps) {
         </div>
 
         <div
-          className={cn(
-            "col-span-2 row-start-2 flex min-w-0 items-center justify-center gap-1.5 md:order-2",
-            "md:w-auto md:max-w-none md:flex-1 md:justify-center md:gap-2",
-            isRunning && "rounded-lg bg-muted/50 px-1.5 py-1 md:px-2",
-          )}
+          className="col-span-2 row-start-2 flex min-w-0 items-center justify-center gap-1.5 md:order-2
+            md:w-auto md:max-w-none md:flex-1 md:justify-center md:gap-2"
         >
           {isRunning && activeTask && (
             <div className="flex max-w-[min(50vw,14rem)] min-w-0 items-center gap-2 md:max-w-64">
-              <Badge variant="default" className="min-w-0 max-w-full gap-1.5 rounded-md">
+              <Badge
+                variant="default"
+                role={onEditActive ? "button" : undefined}
+                tabIndex={onEditActive ? 0 : undefined}
+                aria-label={onEditActive ? t("nav.edit_active_aria") : undefined}
+                onClick={onEditActive}
+                onKeyDown={(e) => {
+                  if (!onEditActive) {
+                    return
+                  }
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    onEditActive()
+                  }
+                }}
+                className={cn(
+                  "min-w-0 max-w-full gap-1.5 rounded-md",
+                  onEditActive &&
+                    "cursor-pointer transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+                )}
+              >
                 <span className="size-1.5 shrink-0 rounded-full bg-primary-foreground animate-pulse" />
                 <span className="min-w-0 truncate">{activeTask.taskName}</span>
               </Badge>
