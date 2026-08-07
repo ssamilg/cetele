@@ -280,7 +280,7 @@ export function App() {
           className="fixed inset-x-0 bottom-0 z-40 flex h-9 items-center border-t border-border
             bg-card/95 px-3 backdrop-blur-md supports-backdrop-filter:bg-card/80 md:px-6"
         >
-          <span className="flex-1 text-xs text-muted-foreground tabular-nums">v1.0</span>
+          <span className="flex-1 text-xs text-muted-foreground tabular-nums">v1.2</span>
           <span className="text-xs text-muted-foreground">
             {t("app.footer_made_by")}{" "}
             <a
