@@ -149,7 +149,7 @@ export function App() {
       <Navbar onStartStop={handleStartStopClick} onManualEntry={() => setManualModalOpen(true)} />
 
       <main className="mx-auto flex w-full min-w-0 max-w-6xl flex-1 flex-col px-4 py-6 pb-16 md:px-6 md:pt-8">
-        <div className="flex flex-1 flex-col gap-7 md:gap-8">
+        <div className="flex flex-1 flex-col gap-6">
           <div className="flex min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-6">
             <div className="flex min-w-0 flex-col gap-1.5">
               <h1 className="text-xl font-semibold tracking-tight md:text-2xl">{t("app.title")}</h1>
@@ -223,7 +223,7 @@ export function App() {
           </div>
 
           <DailyStats selectedDayKey={selectedDayKey} />
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-6">
             <DayFilter
               records={records}
               selectedDayKey={selectedDayKey}

@@ -141,26 +141,25 @@ export function WorkLogTable({
 
             return (
               <Fragment key={group.key}>
-                <TableRow className="border-b border-border bg-muted/30 hover:bg-muted/30">
-                  <TableCell colSpan={Math.max(columnCount - 2, 1)} className="py-2.5 pl-4">
+                <TableRow className="border-y border-border/80 bg-muted/20 hover:bg-muted/20">
+                  <TableCell colSpan={Math.max(columnCount - 2, 1)} className="py-2 pl-4">
                     <span className="text-xs font-semibold tracking-wide text-foreground uppercase">
                       {dayLabel}
                     </span>
                   </TableCell>
-                  <TableCell className="py-2.5">
-                    <Badge variant="secondary" className="rounded-md font-mono text-xs tabular-nums">
+                  <TableCell className="py-2">
+                    <span className="font-mono text-sm font-semibold tabular-nums tracking-tight text-foreground">
                       {formatDuration(group.totalSeconds)}
-                    </Badge>
+                    </span>
                   </TableCell>
                   {hourlyRate > 0 && (
-                    <TableCell className="py-2.5">
-                      <Badge
-                        variant="outline"
-                        className="rounded-md font-mono text-xs tabular-nums text-green-600
-                          border-green-300 dark:text-green-400 dark:border-green-800"
+                    <TableCell className="py-2">
+                      <span
+                        className="font-mono text-sm font-semibold tabular-nums tracking-tight
+                          text-green-600 dark:text-green-400"
                       >
                         {formatEarned(group.totalSeconds, hourlyRate, currency)}
-                      </Badge>
+                      </span>
                     </TableCell>
                   )}
                 </TableRow>

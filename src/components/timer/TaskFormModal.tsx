@@ -25,6 +25,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { formatDuration } from "@/lib/formatters"
+import { cn } from "@/lib/utils"
 import type { TimeRecord } from "@/types"
 
 interface TaskFormModalProps {
@@ -245,10 +246,10 @@ export function TaskFormModal({
                   </span>
                   {isTimeValid && editedDuration > 0 ? (
                     <Badge
-                      variant="default"
+                      variant="secondary"
                       className="gap-1.5 rounded-md px-2.5 font-mono text-xs tabular-nums"
                     >
-                      <Clock className="size-3.5" />
+                      <Clock className="size-3.5 text-muted-foreground" />
                       {formatDuration(editedDuration)}
                     </Badge>
                   ) : (
@@ -282,10 +283,18 @@ export function TaskFormModal({
                       <Button
                         key={minutes}
                         type="button"
-                        variant={isQuickSpanActive ? "default" : "outline"}
+                        variant="outline"
                         size="sm"
                         onClick={() => applyQuickSpan(minutes)}
-                        className="h-9 w-full"
+                        className={cn(
+                          "h-9 w-full",
+                          isQuickSpanActive && "bg-transparent text-foreground shadow-none",
+                        )}
+                        style={
+                          isQuickSpanActive
+                            ? { borderColor: "var(--primary)" }
+                            : undefined
+                        }
                       >
                         {label}
                       </Button>
