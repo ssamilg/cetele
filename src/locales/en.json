@@ -16,7 +16,8 @@
   "nav": {
     "start": "Start",
     "stop": "Stop",
-    "manual_entry_aria": "Log time manually"
+    "manual_entry_aria": "Log time manually",
+    "edit_active_aria": "Edit active session"
   },
   "settings": {
     "aria": "Settings",
@@ -33,17 +34,48 @@
     "description": "Track and review all your logged work sessions.",
     "export": "Export",
     "sync_sheets": "Sync Sheets",
+    "toggle_filters": "Filters",
+    "toggle_filters_aria": "Toggle filters",
     "rate_suffix": "/hr",
+    "rate_aria": "Hourly rate",
     "footer_made_by": "Made by",
     "footer_with_love": "with ❤️"
   },
   "stats": {
+    "hours": "Hours",
+    "tasks": "Tasks",
+    "earned": "Earned",
     "hours_today": "Hours Today",
     "tasks_today": "Tasks Today",
-    "earned_today": "Earned Today"
+    "earned_today": "Earned Today",
+    "hours_all": "Total Hours",
+    "tasks_all": "Total Tasks",
+    "earned_all": "Total Earned",
+    "hours_day": "Hours · {{date}}",
+    "tasks_day": "Tasks · {{date}}",
+    "earned_day": "Earned · {{date}}"
+  },
+  "day_filter": {
+    "all": "All",
+    "today": "Today",
+    "aria": "Filter by day",
+    "empty_day_title": "No entries for this day",
+    "empty_day_desc": "Pick another day or start tracking to log time."
+  },
+  "timer": {
+    "default_title": "{{time}} Session"
+  },
+  "type": {
+    "label": "Type",
+    "work": "Work",
+    "meet": "Meet"
+  },
+  "type_filter": {
+    "aria": "Filter by type"
   },
   "table": {
     "col_task": "Task",
+    "col_type": "Type",
     "col_description": "Description",
     "col_date": "Date",
     "col_started": "Started",
@@ -57,8 +89,10 @@
     "entry_count_other": "{{count}} entries"
   },
   "modal": {
-    "start_title": "Start New Task",
-    "start_desc": "Enter the task details to begin tracking your time.",
+    "active_title": "Edit Session",
+    "active_desc": "Update the title, description, or type while the timer keeps running.",
+    "stop_title": "Stop Session",
+    "stop_desc": "Review the details and times before saving this session.",
     "edit_title": "Edit Entry",
     "edit_desc": "Modify the task details for this time entry.",
     "manual_title": "Log Time Manually",
@@ -66,6 +100,7 @@
     "label_started": "Started",
     "label_stopped": "Stopped",
     "label_duration": "Duration",
+    "label_type": "Type",
     "label_title": "Title",
     "label_description": "Description",
     "placeholder_title": "What are you working on?",
@@ -78,7 +113,7 @@
     "btn_cancel": "Cancel",
     "btn_delete": "Delete",
     "btn_save": "Save Changes",
-    "btn_start": "Start Timer",
+    "btn_stop_save": "Save Entry",
     "btn_log": "Log Entry",
     "delete_confirm_title": "Delete entry?",
     "delete_confirm_desc": "Are you sure you want to delete this time entry? This action cannot be undone.",

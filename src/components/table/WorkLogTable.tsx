@@ -1,4 +1,5 @@
-import { Clock, FileText } from "lucide-react"
+import { Fragment } from "react"
+import { Briefcase, Clock, FileText, Users } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -11,15 +12,32 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 import { useTranslation } from "react-i18next"
-import { formatDuration, formatSessionDateRange, formatTimeShort } from "@/lib/formatters"
+import {
+  formatDate,
+  formatDuration,
+  formatSessionDateRange,
+  formatTimeShort,
+  toDateKey,
+  todayDateKey,
+} from "@/lib/formatters"
 import { useTimerStore, CURRENCY_SYMBOLS } from "@/store/useTimerStore"
-import type { TimeRecord } from "@/types"
+import { normalizeRecordType, type RecordType, type TimeRecord } from "@/types"
 import type { Currency } from "@/store/useTimerStore"
 
 interface WorkLogTableProps {
   entries: TimeRecord[]
   onEdit: (entry: TimeRecord) => void
   hourlyRate?: number
+  emptyTitle?: string
+  emptyDescription?: string
+  showDayRows?: boolean
+}
+
+interface DayGroup {
+  key: string
+  date: Date
+  entries: TimeRecord[]
+  totalSeconds: number
 }
 
 function formatEarned(totalSeconds: number, hourlyRate: number, currency: Currency): string {
@@ -31,114 +49,224 @@ function formatEarned(totalSeconds: number, hourlyRate: number, currency: Curren
   return `${CURRENCY_SYMBOLS[currency]}${formatted}`
 }
 
-export function WorkLogTable({ entries, onEdit, hourlyRate = 0 }: WorkLogTableProps) {
+function groupEntriesByDay(entries: TimeRecord[]): DayGroup[] {
+  const groups = new Map<string, DayGroup>()
+
+  for (const entry of entries.slice().reverse()) {
+    const key = toDateKey(entry.startTime)
+    const existing = groups.get(key)
+    if (existing) {
+      existing.entries.push(entry)
+      existing.totalSeconds += entry.duration
+    } else {
+      groups.set(key, {
+        key,
+        date: new Date(
+          entry.startTime.getFullYear(),
+          entry.startTime.getMonth(),
+          entry.startTime.getDate(),
+        ),
+        entries: [entry],
+        totalSeconds: entry.duration,
+      })
+    }
+  }
+
+  return Array.from(groups.values())
+}
+
+function TypeCell({ type }: { type: RecordType }) {
+  const { t } = useTranslation()
+  const recordType = normalizeRecordType(type)
+  const isMeet = recordType === "meet"
+  const Icon = isMeet ? Users : Briefcase
+
+  return (
+    <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+      <Icon className="size-3.5 shrink-0" />
+      <span className="truncate">{t(isMeet ? "type.meet" : "type.work")}</span>
+    </span>
+  )
+}
+
+export function WorkLogTable({
+  entries,
+  onEdit,
+  hourlyRate = 0,
+  emptyTitle,
+  emptyDescription,
+  showDayRows = true,
+}: WorkLogTableProps) {
   const { t } = useTranslation()
   const currency = useTimerStore((s) => s.currency)
+  const todayKey = todayDateKey()
+  const columnCount = hourlyRate > 0 ? 8 : 7
 
   if (entries.length === 0) {
     return (
-      <Empty className="border-dashed border bg-card rounded-xl">
+      <Empty className="rounded-xl border border-dashed bg-card py-12">
         <EmptyHeader>
           <EmptyMedia variant="icon">
             <Clock />
           </EmptyMedia>
-          <EmptyTitle>{t("table.empty_title")}</EmptyTitle>
-          <EmptyDescription>{t("table.empty_desc")}</EmptyDescription>
+          <EmptyTitle>{emptyTitle ?? t("table.empty_title")}</EmptyTitle>
+          <EmptyDescription>{emptyDescription ?? t("table.empty_desc")}</EmptyDescription>
         </EmptyHeader>
       </Empty>
     )
   }
 
+  const dayGroups = groupEntriesByDay(entries)
   const totalSeconds = entries.reduce((sum, e) => sum + e.duration, 0)
 
   return (
-    <div className="w-full min-w-0 overflow-x-auto rounded-xl border bg-card">
+    <div className="w-full min-w-0 overflow-x-auto rounded-xl border bg-card shadow-sm">
       <Table className="min-w-[640px]">
         <TableHeader>
-          <TableRow className="bg-muted/50 border-b border-border">
-            <TableHead className="w-[220px] pl-4 text-foreground font-semibold">{t("table.col_task")}</TableHead>
-            <TableHead className="w-[260px] text-foreground font-semibold">{t("table.col_description")}</TableHead>
-            <TableHead className="w-[150px] text-foreground font-semibold">{t("table.col_date")}</TableHead>
-            <TableHead className="w-[90px] text-foreground font-semibold">{t("table.col_started")}</TableHead>
-            <TableHead className="w-[90px] text-foreground font-semibold">{t("table.col_stopped")}</TableHead>
-            <TableHead className="w-[100px] text-foreground font-semibold">{t("table.col_duration")}</TableHead>
+          <TableRow className="border-b border-border bg-muted/40 hover:bg-muted/40">
+            <TableHead className="w-[200px] pl-4 font-semibold text-foreground">
+              {t("table.col_task")}
+            </TableHead>
+            <TableHead className="w-[180px] font-semibold text-foreground">
+              {t("table.col_description")}
+            </TableHead>
+            <TableHead className="w-[88px] font-semibold text-foreground">
+              {t("table.col_type")}
+            </TableHead>
+            <TableHead className="w-[150px] font-semibold text-foreground">
+              {t("table.col_date")}
+            </TableHead>
+            <TableHead className="w-[90px] font-semibold text-foreground">
+              {t("table.col_started")}
+            </TableHead>
+            <TableHead className="w-[90px] font-semibold text-foreground">
+              {t("table.col_stopped")}
+            </TableHead>
+            <TableHead className="w-[100px] font-semibold text-foreground">
+              {t("table.col_duration")}
+            </TableHead>
             {hourlyRate > 0 && (
-              <TableHead className="w-[100px] text-foreground font-semibold">{t("table.col_earned")}</TableHead>
+              <TableHead className="w-[100px] font-semibold text-foreground">
+                {t("table.col_earned")}
+              </TableHead>
             )}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {entries.slice().reverse().map((entry) => (
-            <TableRow
-              key={entry.id}
-              className="group cursor-pointer hover:bg-muted/50"
-              onClick={() => onEdit(entry)}
-            >
-              <TableCell className="py-4">
-                <div className="flex items-center gap-2">
-                  <div className="flex size-2 shrink-0 rounded-full bg-primary/70" />
-                  <span className="font-medium text-sm">{entry.taskName}</span>
-                </div>
-              </TableCell>
-              <TableCell className="py-4">
-                {entry.description ? (
-                  <span className="text-sm line-clamp-2 max-w-72">
-                    {entry.description}
-                  </span>
-                ) : (
-                  <span className="text-sm text-muted-foreground/80 flex items-center gap-1">
-                    <FileText className="size-3" />
-                    {t("table.no_description")}
-                  </span>
+          {dayGroups.map((group) => {
+            return (
+              <Fragment key={group.key}>
+                {showDayRows && (
+                  <TableRow className="border-y border-border/80 bg-muted/20 hover:bg-muted/20">
+                    <TableCell colSpan={Math.max(columnCount - 2, 1)} className="py-2 pl-4">
+                      <span className="text-xs font-semibold tracking-wide text-foreground uppercase">
+                        {group.key === todayKey
+                          ? t("day_filter.today")
+                          : formatDate(group.date)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-2">
+                      <span className="font-mono text-sm font-semibold tabular-nums tracking-tight text-foreground">
+                        {formatDuration(group.totalSeconds)}
+                      </span>
+                    </TableCell>
+                    {hourlyRate > 0 && (
+                      <TableCell className="py-2">
+                        <span
+                          className="font-mono text-sm font-semibold tabular-nums tracking-tight
+                            text-green-600 dark:text-green-400"
+                        >
+                          {formatEarned(group.totalSeconds, hourlyRate, currency)}
+                        </span>
+                      </TableCell>
+                    )}
+                  </TableRow>
                 )}
-              </TableCell>
-              <TableCell className="text-sm py-4 text-muted-foreground">
-                {formatSessionDateRange(entry.startTime, entry.endTime)}
-              </TableCell>
-              <TableCell className="text-sm py-4 font-mono tabular-nums">
-                {formatTimeShort(entry.startTime)}
-              </TableCell>
-              <TableCell className="text-sm py-4 font-mono tabular-nums">
-                {formatTimeShort(entry.endTime)}
-              </TableCell>
-              <TableCell className="py-4">
-                <Badge variant="secondary" className="font-mono text-xs">
-                  {formatDuration(entry.duration)}
-                </Badge>
-              </TableCell>
-              {hourlyRate > 0 && (
-                <TableCell className="py-4">
-                  <Badge
-                    variant="outline"
-                    className="font-mono text-xs text-green-600 border-green-300
-                      dark:text-green-400 dark:border-green-800"
+                {group.entries.map((entry) => (
+                  <TableRow
+                    key={entry.id}
+                    tabIndex={0}
+                    className="group cursor-pointer hover:bg-muted/50 focus-visible:bg-muted/50
+                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50
+                      focus-visible:ring-inset"
+                    onClick={() => onEdit(entry)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault()
+                        onEdit(entry)
+                      }
+                    }}
                   >
-                    {formatEarned(entry.duration, hourlyRate, currency)}
-                  </Badge>
-                </TableCell>
-              )}
-            </TableRow>
-          ))}
+                    <TableCell className="py-3.5 pl-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className="size-1.5 shrink-0 rounded-full bg-primary" />
+                        <span className="text-sm font-medium">{entry.taskName}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-3.5">
+                      {entry.description ? (
+                        <span className="line-clamp-2 max-w-48 text-sm text-muted-foreground">
+                          {entry.description}
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-sm text-muted-foreground/70">
+                          <FileText className="size-3" />
+                          {t("table.no_description")}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="py-3.5">
+                      <TypeCell type={entry.type} />
+                    </TableCell>
+                    <TableCell className="py-3.5 text-sm text-muted-foreground">
+                      {formatSessionDateRange(entry.startTime, entry.endTime)}
+                    </TableCell>
+                    <TableCell className="py-3.5 font-mono text-sm tabular-nums">
+                      {formatTimeShort(entry.startTime)}
+                    </TableCell>
+                    <TableCell className="py-3.5 font-mono text-sm tabular-nums">
+                      {formatTimeShort(entry.endTime)}
+                    </TableCell>
+                    <TableCell className="py-3.5">
+                      <Badge variant="secondary" className="rounded-md font-mono text-xs tabular-nums">
+                        {formatDuration(entry.duration)}
+                      </Badge>
+                    </TableCell>
+                    {hourlyRate > 0 && (
+                      <TableCell className="py-3.5">
+                        <Badge
+                          variant="outline"
+                          className="rounded-md font-mono text-xs tabular-nums text-green-600
+                            border-green-300 dark:text-green-400 dark:border-green-800"
+                        >
+                          {formatEarned(entry.duration, hourlyRate, currency)}
+                        </Badge>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </Fragment>
+            )
+          })}
         </TableBody>
         <TableFooter>
           <TableRow className="bg-muted/20 hover:bg-muted/20">
-            <TableCell colSpan={5} className="px-4 py-3 text-sm text-muted-foreground">
+            <TableCell colSpan={6} className="px-4 py-3 text-sm text-muted-foreground">
               {t("table.entry_count", { count: entries.length })}
             </TableCell>
             <TableCell className="py-3">
-              <Badge variant="outline" className="font-mono text-xs">
+              <span className="font-mono text-sm font-semibold tabular-nums tracking-tight text-foreground">
                 {formatDuration(totalSeconds)}
-              </Badge>
+              </span>
             </TableCell>
             {hourlyRate > 0 && (
               <TableCell className="py-3">
-                <Badge
-                  variant="outline"
-                  className="font-mono text-xs text-green-600 border-green-300
-                    dark:text-green-400 dark:border-green-800"
+                <span
+                  className="font-mono text-sm font-semibold tabular-nums tracking-tight
+                    text-green-600 dark:text-green-400"
                 >
                   {formatEarned(totalSeconds, hourlyRate, currency)}
-                </Badge>
+                </span>
               </TableCell>
             )}
           </TableRow>

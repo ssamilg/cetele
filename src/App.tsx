@@ -1,25 +1,35 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { Download, Sheet } from "lucide-react"
+import { Download, ListFilter, Sheet } from "lucide-react"
 import { Navbar } from "@/components/timer/Navbar"
 import { TaskFormModal } from "@/components/timer/TaskFormModal"
 import { GoogleOAuthModal } from "@/components/sync/GoogleOAuthModal"
 import { DailyStats } from "@/components/DailyStats"
+import { DayFilter } from "@/components/DayFilter"
 import { WorkLogTable } from "@/components/table/WorkLogTable"
 import { LandingPage } from "@/components/LandingPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { exportToCsv } from "@/lib/exporters"
+import { ALL_DAYS_KEY, formatTimeShort, toDateKey, todayDateKey } from "@/lib/formatters"
 import {
   useTimerStore,
   CURRENCY_SYMBOLS,
   cancelDebouncedBackgroundSheetSync,
 } from "@/store/useTimerStore"
-import type { TimeRecord } from "@/types"
+import type { TimeRecord, TypeFilterKey } from "@/types"
+import { ALL_TYPES_KEY, normalizeRecordType } from "@/types"
 
 const APP_ENTERED_STORAGE_KEY = "cetele-app-entered"
+const FILTERS_STORAGE_KEY = "cetele-filters"
+
+interface StoredFilters {
+  visible: boolean
+  dayKey: string
+  typeKey: TypeFilterKey
+}
 
 function readAppEnteredFromStorage(): boolean {
   let entered = false
@@ -31,11 +41,47 @@ function readAppEnteredFromStorage(): boolean {
   return entered
 }
 
+function isTypeFilterKey(value: unknown): value is TypeFilterKey {
+  return value === ALL_TYPES_KEY || value === "work" || value === "meet"
+}
+
+function readFiltersFromStorage(): StoredFilters {
+  const defaults: StoredFilters = {
+    visible: false,
+    dayKey: ALL_DAYS_KEY,
+    typeKey: ALL_TYPES_KEY,
+  }
+  let result = defaults
+  try {
+    const raw = localStorage.getItem(FILTERS_STORAGE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<StoredFilters>
+      result = {
+        visible: parsed.visible === true,
+        dayKey: typeof parsed.dayKey === "string" ? parsed.dayKey : ALL_DAYS_KEY,
+        typeKey: isTypeFilterKey(parsed.typeKey) ? parsed.typeKey : ALL_TYPES_KEY,
+      }
+    }
+  } catch {
+    result = defaults
+  }
+  return result
+}
+
+function writeFiltersToStorage(filters: StoredFilters) {
+  try {
+    localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters))
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
 export function App() {
   const records = useTimerStore((s) => s.records)
   const isRunning = useTimerStore((s) => s.timer.isRunning)
   const activeTask = useTimerStore((s) => s.timer.activeTask)
   const startTimer = useTimerStore((s) => s.startTimer)
+  const updateActiveTask = useTimerStore((s) => s.updateActiveTask)
   const stopTimer = useTimerStore((s) => s.stopTimer)
   const addEntry = useTimerStore((s) => s.addEntry)
   const updateEntry = useTimerStore((s) => s.updateEntry)
@@ -46,11 +92,40 @@ export function App() {
 
   const { t } = useTranslation()
   const [isAppEntered, setIsAppEntered] = useState(readAppEnteredFromStorage)
-  const [taskModalOpen, setTaskModalOpen] = useState(false)
+  const [activeModalOpen, setActiveModalOpen] = useState(false)
+  const [stopModalOpen, setStopModalOpen] = useState(false)
+  const [stoppingEntry, setStoppingEntry] = useState<TimeRecord | null>(null)
   const [manualModalOpen, setManualModalOpen] = useState(false)
   const [googleModalOpen, setGoogleModalOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<TimeRecord | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
+  const [storedFilters] = useState(readFiltersFromStorage)
+  const [filtersVisible, setFiltersVisible] = useState(storedFilters.visible)
+  const [selectedDayKey, setSelectedDayKey] = useState(storedFilters.dayKey)
+  const [selectedTypeKey, setSelectedTypeKey] = useState<TypeFilterKey>(
+    storedFilters.typeKey,
+  )
+
+  const filteredRecords = useMemo(
+    () =>
+      records.filter((r) => {
+        const dayMatch =
+          selectedDayKey === ALL_DAYS_KEY || toDateKey(r.startTime) === selectedDayKey
+        const typeMatch =
+          selectedTypeKey === ALL_TYPES_KEY ||
+          normalizeRecordType(r.type) === selectedTypeKey
+        return dayMatch && typeMatch
+      }),
+    [records, selectedDayKey, selectedTypeKey],
+  )
+
+  useEffect(() => {
+    writeFiltersToStorage({
+      visible: filtersVisible,
+      dayKey: selectedDayKey,
+      typeKey: selectedTypeKey,
+    })
+  }, [filtersVisible, selectedDayKey, selectedTypeKey])
 
   useEffect(() => {
     return () => {
@@ -58,17 +133,75 @@ export function App() {
     }
   }, [])
 
+  useEffect(() => {
+    if (selectedDayKey === ALL_DAYS_KEY) {
+      return
+    }
+    const todayKey = todayDateKey()
+    if (selectedDayKey === todayKey) {
+      return
+    }
+    const hasDay = records.some((r) => toDateKey(r.startTime) === selectedDayKey)
+    if (!hasDay) {
+      setSelectedDayKey(ALL_DAYS_KEY)
+    }
+  }, [records, selectedDayKey])
+
+  useEffect(() => {
+    if (!isRunning) {
+      setActiveModalOpen(false)
+    }
+  }, [isRunning])
+
   const handleStartStopClick = () => {
     if (isRunning && activeTask) {
-      stopTimer(activeTask.taskName, activeTask.description)
+      const endTime = new Date()
+      const startTime = activeTask.startTime
+      setStoppingEntry({
+        id: crypto.randomUUID(),
+        taskName: activeTask.taskName,
+        description: activeTask.description,
+        type: activeTask.type,
+        startTime,
+        endTime,
+        duration: Math.max(0, Math.floor((endTime.getTime() - startTime.getTime()) / 1000)),
+      })
+      setActiveModalOpen(false)
+      setStopModalOpen(true)
     } else {
-      setTaskModalOpen(true)
+      const now = new Date()
+      startTimer(t("timer.default_title", { time: formatTimeShort(now) }))
     }
   }
 
-  const handleStart = (taskName: string, description: string) => {
-    startTimer(taskName, description)
-    setTaskModalOpen(false)
+  const handleEditActive = () => {
+    if (!activeTask) {
+      return
+    }
+    setStopModalOpen(false)
+    setActiveModalOpen(true)
+  }
+
+  const handleSaveActive = (taskName: string, description: string, type: TimeRecord["type"]) => {
+    updateActiveTask(taskName, description, type)
+    setActiveModalOpen(false)
+  }
+
+  const handleConfirmStop = (entry: TimeRecord) => {
+    stopTimer({
+      taskName: entry.taskName,
+      description: entry.description,
+      type: entry.type,
+      startTime: entry.startTime,
+      endTime: entry.endTime,
+    })
+    setStopModalOpen(false)
+    setStoppingEntry(null)
+  }
+
+  const handleCancelStop = () => {
+    setStopModalOpen(false)
+    setStoppingEntry(null)
   }
 
   const handleEditEntry = (entry: TimeRecord) => {
@@ -92,6 +225,18 @@ export function App() {
     addEntry(entry)
     setManualModalOpen(false)
   }
+
+  const activeDraft: TimeRecord | null = activeTask
+    ? {
+        id: "active-draft",
+        taskName: activeTask.taskName,
+        description: activeTask.description,
+        type: activeTask.type,
+        startTime: activeTask.startTime,
+        endTime: activeTask.startTime,
+        duration: 0,
+      }
+    : null
 
   const handleLandingEnter = () => {
     try {
@@ -121,18 +266,32 @@ export function App() {
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="min-h-svh bg-background flex flex-col"
         >
-      <Navbar onStartStop={handleStartStopClick} onManualEntry={() => setManualModalOpen(true)} />
+      <Navbar
+        onStartStop={handleStartStopClick}
+        onManualEntry={() => setManualModalOpen(true)}
+        onEditActive={handleEditActive}
+      />
 
-      <main className="mx-auto flex w-full min-w-0 max-w-6xl flex-1 flex-col px-4 py-6 pb-20 md:px-6 md:pt-8">
+      <main className="mx-auto flex w-full min-w-0 max-w-6xl flex-1 flex-col px-4 py-6 pb-16 md:px-6 md:pt-8">
         <div className="flex flex-1 flex-col gap-6">
-          <div className="flex min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div className="min-w-0 flex flex-col gap-1">
+          <div className="flex min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-6">
+            <div className="flex min-w-0 flex-col gap-1.5">
               <h1 className="text-xl font-semibold tracking-tight md:text-2xl">{t("app.title")}</h1>
-              <p className="text-sm text-muted-foreground">{t("app.description")}</p>
+              <p className="max-w-xl text-sm text-muted-foreground leading-relaxed">
+                {t("app.description")}
+              </p>
             </div>
             <div className="flex min-w-0 flex-wrap items-center gap-2 md:shrink-0">
-              <div className="flex items-center rounded-md border border-border overflow-hidden h-8 text-sm bg-background">
-                <span className="px-2.5 text-muted-foreground border-r border-border h-full flex items-center select-none">
+              <div
+                className="flex h-8 items-center overflow-hidden rounded-md border border-border
+                  bg-background text-sm transition-[box-shadow,border-color]
+                  focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50"
+              >
+                <span
+                  className="flex h-full items-center border-r border-border px-2.5
+                    text-muted-foreground select-none"
+                  aria-hidden="true"
+                >
                   {CURRENCY_SYMBOLS[currency]}
                 </span>
                 <Input
@@ -140,13 +299,20 @@ export function App() {
                   min="0"
                   step="1"
                   placeholder="0"
+                  aria-label={t("app.rate_aria")}
                   value={hourlyRate || ""}
                   onChange={(e) => setHourlyRate(Math.max(0, Number(e.target.value)))}
-                  className="w-20 border-0 rounded-none h-full shadow-none px-2 focus-visible:ring-0
-                    [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none
+                  className="h-full w-20 rounded-none border-0 px-2 shadow-none
+                    focus-visible:ring-0
+                    [appearance:textfield]
+                    [&::-webkit-inner-spin-button]:appearance-none
                     [&::-webkit-outer-spin-button]:appearance-none"
                 />
-                <span className="px-2 text-muted-foreground border-l border-border h-full flex items-center text-xs select-none">
+                <span
+                  className="flex h-full items-center border-l border-border px-2
+                    text-xs text-muted-foreground select-none"
+                  aria-hidden="true"
+                >
                   {t("app.rate_suffix")}
                 </span>
               </div>
@@ -165,7 +331,7 @@ export function App() {
                   dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
               >
                 <Download className="size-3.5" />
-                  {t("app.export")}
+                {t("app.export")}
               </Button>
               <Button
                 variant="outline"
@@ -175,21 +341,67 @@ export function App() {
                   dark:text-green-400 dark:border-green-800 dark:hover:bg-green-900/20 dark:hover:text-green-300"
               >
                 <Sheet className="size-3.5" />
-                  {t("app.sync_sheets")}
+                {t("app.sync_sheets")}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                aria-pressed={filtersVisible}
+                aria-label={t("app.toggle_filters_aria")}
+                onClick={() => setFiltersVisible((open) => !open)}
+                className="gap-1.5 text-foreground border-foreground/20 hover:bg-accent
+                  hover:text-foreground dark:border-foreground/35 dark:hover:bg-accent"
+              >
+                <ListFilter className="size-3.5" />
+                {t("app.toggle_filters")}
               </Button>
             </div>
           </div>
 
-          <DailyStats />
-          <WorkLogTable entries={records} onEdit={handleEditEntry} hourlyRate={hourlyRate} />
+          {filtersVisible && (
+            <DayFilter
+              records={records}
+              selectedDayKey={selectedDayKey}
+              onSelectDay={setSelectedDayKey}
+              selectedTypeKey={selectedTypeKey}
+              onSelectType={setSelectedTypeKey}
+            />
+          )}
+
+          <DailyStats selectedDayKey={selectedDayKey} selectedTypeKey={selectedTypeKey} />
+          <WorkLogTable
+            entries={filteredRecords}
+            onEdit={handleEditEntry}
+            hourlyRate={hourlyRate}
+            showDayRows={selectedDayKey === ALL_DAYS_KEY}
+            emptyTitle={
+              selectedDayKey !== ALL_DAYS_KEY && records.length > 0
+                ? t("day_filter.empty_day_title")
+                : undefined
+            }
+            emptyDescription={
+              selectedDayKey !== ALL_DAYS_KEY && records.length > 0
+                ? t("day_filter.empty_day_desc")
+                : undefined
+            }
+          />
         </div>
       </main>
 
       <TaskFormModal
-        open={taskModalOpen}
-        mode="start"
-        onStart={handleStart}
-        onCancel={() => setTaskModalOpen(false)}
+        open={activeModalOpen}
+        mode="active"
+        entry={activeDraft}
+        onSaveActive={handleSaveActive}
+        onCancel={() => setActiveModalOpen(false)}
+      />
+
+      <TaskFormModal
+        open={stopModalOpen}
+        mode="stop"
+        entry={stoppingEntry}
+        onStop={handleConfirmStop}
+        onCancel={handleCancelStop}
       />
 
       <TaskFormModal
@@ -213,15 +425,18 @@ export function App() {
         onCancel={() => { setEditModalOpen(false); setEditingEntry(null) }}
       />
 
-        <footer className="fixed bottom-0 inset-x-0 z-40 flex h-9 items-center border-t border-border bg-card px-3 md:px-6">
-          <span className="flex-1 text-xs text-muted-foreground">v1.0</span>
+        <footer
+          className="fixed inset-x-0 bottom-0 z-40 flex h-9 items-center border-t border-border
+            bg-card/95 px-3 backdrop-blur-md supports-backdrop-filter:bg-card/80 md:px-6"
+        >
+          <span className="flex-1 text-xs text-muted-foreground tabular-nums">v1.2</span>
           <span className="text-xs text-muted-foreground">
             {t("app.footer_made_by")}{" "}
             <a
               href="https://ssamilg.dev"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-foreground hover:text-primary transition-colors"
+              className="font-medium text-foreground transition-colors hover:text-primary"
             >
               SSG
             </a>

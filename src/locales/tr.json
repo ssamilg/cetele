@@ -16,7 +16,8 @@
   "nav": {
     "start": "Başlat",
     "stop": "Durdur",
-    "manual_entry_aria": "Zamanı manuel kaydet"
+    "manual_entry_aria": "Zamanı manuel kaydet",
+    "edit_active_aria": "Aktif oturumu düzenle"
   },
   "settings": {
     "aria": "Ayarlar",
@@ -33,17 +34,48 @@
     "description": "Kaydedilmiş tüm çalışma oturumlarınızı takip edin ve inceleyin.",
     "export": "Dışa Aktar",
     "sync_sheets": "E-Tablolar ile Eşitle",
+    "toggle_filters": "Filtreler",
+    "toggle_filters_aria": "Filtreleri aç/kapat",
     "rate_suffix": "/sa",
+    "rate_aria": "Saatlik ücret",
     "footer_made_by": "Geliştirici:",
     "footer_with_love": "❤️ ile"
   },
   "stats": {
+    "hours": "Süre",
+    "tasks": "Görev",
+    "earned": "Kazanç",
     "hours_today": "Bugünkü Süre",
     "tasks_today": "Bugünkü Görev",
-    "earned_today": "Bugünkü Kazanç"
+    "earned_today": "Bugünkü Kazanç",
+    "hours_all": "Toplam Süre",
+    "tasks_all": "Toplam Görev",
+    "earned_all": "Toplam Kazanç",
+    "hours_day": "Süre · {{date}}",
+    "tasks_day": "Görev · {{date}}",
+    "earned_day": "Kazanç · {{date}}"
+  },
+  "day_filter": {
+    "all": "Tümü",
+    "today": "Bugün",
+    "aria": "Güne göre filtrele",
+    "empty_day_title": "Bu gün için kayıt yok",
+    "empty_day_desc": "Başka bir gün seçin veya zaman kaydetmeye başlayın."
+  },
+  "timer": {
+    "default_title": "{{time}} Oturum"
+  },
+  "type": {
+    "label": "Tür",
+    "work": "İş",
+    "meet": "Toplantı"
+  },
+  "type_filter": {
+    "aria": "Türe göre filtrele"
   },
   "table": {
     "col_task": "Görev",
+    "col_type": "Tür",
     "col_description": "Açıklama",
     "col_date": "Tarih",
     "col_started": "Başlangıç",
@@ -57,8 +89,10 @@
     "entry_count_other": "{{count}} kayıt"
   },
   "modal": {
-    "start_title": "Yeni Görev Başlat",
-    "start_desc": "Zamanı takip etmeye başlamak için görev detaylarını girin.",
+    "active_title": "Oturumu Düzenle",
+    "active_desc": "Sayaç çalışmaya devam ederken başlık, açıklama veya türü güncelleyin.",
+    "stop_title": "Oturumu Durdur",
+    "stop_desc": "Kaydetmeden önce detayları ve zamanları gözden geçirin.",
     "edit_title": "Kaydı Düzenle",
     "edit_desc": "Bu zaman kaydı için görev detaylarını güncelleyin.",
     "manual_title": "Manuel Zaman Ekle",
@@ -66,6 +100,7 @@
     "label_started": "Başlangıç",
     "label_stopped": "Bitiş",
     "label_duration": "Süre",
+    "label_type": "Tür",
     "label_title": "Başlık",
     "label_description": "Açıklama",
     "placeholder_title": "Ne üzerinde çalışıyorsun?",
@@ -78,7 +113,7 @@
     "btn_cancel": "İptal",
     "btn_delete": "Sil",
     "btn_save": "Değişiklikleri Kaydet",
-    "btn_start": "Sayacı Başlat",
+    "btn_stop_save": "Kaydet",
     "btn_log": "Kaydet",
     "delete_confirm_title": "Kayıt silinsin mi?",
     "delete_confirm_desc": "Bu zaman kaydını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.",
