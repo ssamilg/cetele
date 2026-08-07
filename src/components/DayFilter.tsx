@@ -68,10 +68,11 @@ export function DayFilter({
 
   return (
     <div
-      className="flex min-w-0 items-center gap-2 overflow-x-auto pb-0.5
-        [scrollbar-width:thin]"
+      role="toolbar"
+      aria-label={t("day_filter.aria")}
+      className="flex min-w-0 items-center gap-2 overflow-x-auto pb-0.5 [scrollbar-width:thin]"
     >
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex items-center gap-1.5">
         {prevDays.map((day) => {
           const isSelected = day.key === selectedDayKey
           return (
@@ -81,6 +82,7 @@ export function DayFilter({
               type="button"
               size="sm"
               variant={isSelected ? "default" : "outline"}
+              aria-pressed={isSelected}
               onClick={() => onSelectDay(day.key)}
               className="shrink-0"
             >
@@ -88,11 +90,18 @@ export function DayFilter({
             </Button>
           )
         })}
+        {prevDays.length > 0 && (
+          <span
+            aria-hidden="true"
+            className="mx-0.5 h-4 w-px shrink-0 bg-border"
+          />
+        )}
         <Button
           ref={selectedDayKey === today.key ? selectedRef : undefined}
           type="button"
           size="sm"
           variant={selectedDayKey === today.key ? "default" : "outline"}
+          aria-pressed={selectedDayKey === today.key}
           onClick={() => onSelectDay(today.key)}
           className="shrink-0"
         >
@@ -103,6 +112,7 @@ export function DayFilter({
           type="button"
           size="sm"
           variant={selectedDayKey === ALL_DAYS_KEY ? "default" : "outline"}
+          aria-pressed={selectedDayKey === ALL_DAYS_KEY}
           onClick={() => onSelectDay(ALL_DAYS_KEY)}
           className="shrink-0"
         >

@@ -34,6 +34,7 @@
     "export": "Export",
     "sync_sheets": "Sync Sheets",
     "rate_suffix": "/hr",
+    "rate_aria": "Hourly rate",
     "footer_made_by": "Made by",
     "footer_with_love": "with ❤️"
   },
@@ -54,6 +55,7 @@
   "day_filter": {
     "all": "All",
     "today": "Today",
+    "aria": "Filter by day",
     "empty_day_title": "No entries for this day",
     "empty_day_desc": "Pick another day or start tracking to log time."
   },

@@ -1,4 +1,4 @@
-import { Clock, ListChecks } from "lucide-react"
+import { Clock, ListChecks, Wallet } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Card, CardContent } from "@/components/ui/card"
 import { ALL_DAYS_KEY, formatDate, formatDuration, toDateKey, todayDateKey } from "@/lib/formatters"
@@ -24,16 +24,20 @@ interface StatCardProps {
 
 function StatCard({ icon, label, value, iconClassName }: StatCardProps) {
   return (
-    <Card className="gap-0 py-5">
-      <CardContent className="flex items-center gap-4 px-5">
-        <div className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${iconClassName}`}>
+    <Card className="gap-0 py-4 shadow-sm md:py-5">
+      <CardContent className="flex items-center gap-3.5 px-4 md:gap-4 md:px-5">
+        <div
+          className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${iconClassName}`}
+        >
           {icon}
         </div>
-        <div className="flex flex-col gap-0.5 min-w-0">
-          <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
             {label}
           </span>
-          <span className="text-xl font-semibold tracking-tight truncate">{value}</span>
+          <span className="truncate text-xl font-semibold tracking-tight tabular-nums">
+            {value}
+          </span>
         </div>
       </CardContent>
     </Card>
@@ -81,8 +85,8 @@ export function DailyStats({ selectedDayKey }: DailyStatsProps) {
   return (
     <div
       className={cn(
-        "grid grid-cols-1 gap-4 md:grid-cols-3",
-        hourlyRate === 0 && "md:grid-cols-2",
+        "grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4",
+        hourlyRate > 0 ? "lg:grid-cols-3" : "md:grid-cols-2",
       )}
     >
       <StatCard
@@ -99,7 +103,7 @@ export function DailyStats({ selectedDayKey }: DailyStatsProps) {
       />
       {hourlyRate > 0 && (
         <StatCard
-          icon={<span className="text-lg font-semibold leading-none">{CURRENCY_SYMBOLS[currency]}</span>}
+          icon={<Wallet className="size-5" />}
           label={earnedLabel}
           value={totalSeconds > 0 ? formatEarned(totalSeconds, hourlyRate, currency) : "—"}
           iconClassName="bg-green-500/10 text-green-500"

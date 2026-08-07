@@ -34,6 +34,7 @@
     "export": "Dışa Aktar",
     "sync_sheets": "E-Tablolar ile Eşitle",
     "rate_suffix": "/sa",
+    "rate_aria": "Saatlik ücret",
     "footer_made_by": "Geliştirici:",
     "footer_with_love": "❤️ ile"
   },
@@ -54,6 +55,7 @@
   "day_filter": {
     "all": "Tümü",
     "today": "Bugün",
+    "aria": "Güne göre filtrele",
     "empty_day_title": "Bu gün için kayıt yok",
     "empty_day_desc": "Başka bir gün seçin veya zaman kaydetmeye başlayın."
   },

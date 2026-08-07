@@ -84,10 +84,11 @@ export function WorkLogTable({
   const { t } = useTranslation()
   const currency = useTimerStore((s) => s.currency)
   const todayKey = todayDateKey()
+  const columnCount = hourlyRate > 0 ? 7 : 6
 
   if (entries.length === 0) {
     return (
-      <Empty className="border-dashed border bg-card rounded-xl">
+      <Empty className="rounded-xl border border-dashed bg-card py-12">
         <EmptyHeader>
           <EmptyMedia variant="icon">
             <Clock />
@@ -103,18 +104,32 @@ export function WorkLogTable({
   const totalSeconds = entries.reduce((sum, e) => sum + e.duration, 0)
 
   return (
-    <div className="w-full min-w-0 overflow-x-auto rounded-xl border bg-card">
+    <div className="w-full min-w-0 overflow-x-auto rounded-xl border bg-card shadow-sm">
       <Table className="min-w-[640px]">
         <TableHeader>
-          <TableRow className="bg-muted/50 border-b border-border">
-            <TableHead className="w-[220px] pl-4 text-foreground font-semibold">{t("table.col_task")}</TableHead>
-            <TableHead className="w-[260px] text-foreground font-semibold">{t("table.col_description")}</TableHead>
-            <TableHead className="w-[150px] text-foreground font-semibold">{t("table.col_date")}</TableHead>
-            <TableHead className="w-[90px] text-foreground font-semibold">{t("table.col_started")}</TableHead>
-            <TableHead className="w-[90px] text-foreground font-semibold">{t("table.col_stopped")}</TableHead>
-            <TableHead className="w-[100px] text-foreground font-semibold">{t("table.col_duration")}</TableHead>
+          <TableRow className="border-b border-border bg-muted/40 hover:bg-muted/40">
+            <TableHead className="w-[220px] pl-4 font-semibold text-foreground">
+              {t("table.col_task")}
+            </TableHead>
+            <TableHead className="w-[260px] font-semibold text-foreground">
+              {t("table.col_description")}
+            </TableHead>
+            <TableHead className="w-[150px] font-semibold text-foreground">
+              {t("table.col_date")}
+            </TableHead>
+            <TableHead className="w-[90px] font-semibold text-foreground">
+              {t("table.col_started")}
+            </TableHead>
+            <TableHead className="w-[90px] font-semibold text-foreground">
+              {t("table.col_stopped")}
+            </TableHead>
+            <TableHead className="w-[100px] font-semibold text-foreground">
+              {t("table.col_duration")}
+            </TableHead>
             {hourlyRate > 0 && (
-              <TableHead className="w-[100px] text-foreground font-semibold">{t("table.col_earned")}</TableHead>
+              <TableHead className="w-[100px] font-semibold text-foreground">
+                {t("table.col_earned")}
+              </TableHead>
             )}
           </TableRow>
         </TableHeader>
@@ -126,25 +141,23 @@ export function WorkLogTable({
 
             return (
               <Fragment key={group.key}>
-                <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border">
-                  <TableCell className="py-2" />
-                  <TableCell className="py-2" />
-                  <TableCell className="py-2 text-xs font-medium text-foreground">
-                    {dayLabel}
+                <TableRow className="border-b border-border bg-muted/30 hover:bg-muted/30">
+                  <TableCell colSpan={Math.max(columnCount - 2, 1)} className="py-2.5 pl-4">
+                    <span className="text-xs font-semibold tracking-wide text-foreground uppercase">
+                      {dayLabel}
+                    </span>
                   </TableCell>
-                  <TableCell className="py-2" />
-                  <TableCell className="py-2" />
-                  <TableCell className="py-2">
-                    <Badge variant="outline" className="font-mono text-xs">
+                  <TableCell className="py-2.5">
+                    <Badge variant="secondary" className="rounded-md font-mono text-xs tabular-nums">
                       {formatDuration(group.totalSeconds)}
                     </Badge>
                   </TableCell>
                   {hourlyRate > 0 && (
-                    <TableCell className="py-2">
+                    <TableCell className="py-2.5">
                       <Badge
                         variant="outline"
-                        className="font-mono text-xs text-green-600 border-green-300
-                          dark:text-green-400 dark:border-green-800"
+                        className="rounded-md font-mono text-xs tabular-nums text-green-600
+                          border-green-300 dark:text-green-400 dark:border-green-800"
                       >
                         {formatEarned(group.totalSeconds, hourlyRate, currency)}
                       </Badge>
@@ -154,47 +167,56 @@ export function WorkLogTable({
                 {group.entries.map((entry) => (
                   <TableRow
                     key={entry.id}
-                    className="group cursor-pointer hover:bg-muted/50"
+                    tabIndex={0}
+                    className="group cursor-pointer hover:bg-muted/50 focus-visible:bg-muted/50
+                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50
+                      focus-visible:ring-inset"
                     onClick={() => onEdit(entry)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault()
+                        onEdit(entry)
+                      }
+                    }}
                   >
-                    <TableCell className="py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="flex size-2 shrink-0 rounded-full bg-primary/70" />
-                        <span className="font-medium text-sm">{entry.taskName}</span>
+                    <TableCell className="py-3.5 pl-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className="size-1.5 shrink-0 rounded-full bg-primary" />
+                        <span className="text-sm font-medium">{entry.taskName}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="py-4">
+                    <TableCell className="py-3.5">
                       {entry.description ? (
-                        <span className="text-sm line-clamp-2 max-w-72">
+                        <span className="line-clamp-2 max-w-72 text-sm text-muted-foreground">
                           {entry.description}
                         </span>
                       ) : (
-                        <span className="text-sm text-muted-foreground/80 flex items-center gap-1">
+                        <span className="flex items-center gap-1 text-sm text-muted-foreground/70">
                           <FileText className="size-3" />
                           {t("table.no_description")}
                         </span>
                       )}
                     </TableCell>
-                    <TableCell className="text-sm py-4 text-muted-foreground">
+                    <TableCell className="py-3.5 text-sm text-muted-foreground">
                       {formatSessionDateRange(entry.startTime, entry.endTime)}
                     </TableCell>
-                    <TableCell className="text-sm py-4 font-mono tabular-nums">
+                    <TableCell className="py-3.5 font-mono text-sm tabular-nums">
                       {formatTimeShort(entry.startTime)}
                     </TableCell>
-                    <TableCell className="text-sm py-4 font-mono tabular-nums">
+                    <TableCell className="py-3.5 font-mono text-sm tabular-nums">
                       {formatTimeShort(entry.endTime)}
                     </TableCell>
-                    <TableCell className="py-4">
-                      <Badge variant="secondary" className="font-mono text-xs">
+                    <TableCell className="py-3.5">
+                      <Badge variant="secondary" className="rounded-md font-mono text-xs tabular-nums">
                         {formatDuration(entry.duration)}
                       </Badge>
                     </TableCell>
                     {hourlyRate > 0 && (
-                      <TableCell className="py-4">
+                      <TableCell className="py-3.5">
                         <Badge
                           variant="outline"
-                          className="font-mono text-xs text-green-600 border-green-300
-                            dark:text-green-400 dark:border-green-800"
+                          className="rounded-md font-mono text-xs tabular-nums text-green-600
+                            border-green-300 dark:text-green-400 dark:border-green-800"
                         >
                           {formatEarned(entry.duration, hourlyRate, currency)}
                         </Badge>
@@ -212,7 +234,7 @@ export function WorkLogTable({
               {t("table.entry_count", { count: entries.length })}
             </TableCell>
             <TableCell className="py-3">
-              <Badge variant="outline" className="font-mono text-xs">
+              <Badge variant="outline" className="rounded-md font-mono text-xs tabular-nums">
                 {formatDuration(totalSeconds)}
               </Badge>
             </TableCell>
@@ -220,8 +242,8 @@ export function WorkLogTable({
               <TableCell className="py-3">
                 <Badge
                   variant="outline"
-                  className="font-mono text-xs text-green-600 border-green-300
-                    dark:text-green-400 dark:border-green-800"
+                  className="rounded-md font-mono text-xs tabular-nums text-green-600
+                    border-green-300 dark:text-green-400 dark:border-green-800"
                 >
                   {formatEarned(totalSeconds, hourlyRate, currency)}
                 </Badge>
