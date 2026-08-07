@@ -24,15 +24,21 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { RecordTypeToggle } from "@/components/RecordTypeToggle"
 import { formatDuration } from "@/lib/formatters"
 import { cn } from "@/lib/utils"
-import type { TimeRecord } from "@/types"
+import {
+  DEFAULT_RECORD_TYPE,
+  normalizeRecordType,
+  type RecordType,
+  type TimeRecord,
+} from "@/types"
 
 interface TaskFormModalProps {
   open: boolean
   mode: "start" | "edit" | "manual"
   entry?: TimeRecord | null
-  onStart?: (taskName: string, description: string) => void
+  onStart?: (taskName: string, description: string, type: RecordType) => void
   onSave?: (entry: TimeRecord) => void
   onDelete?: (id: string) => void
   onCancel: () => void
@@ -78,6 +84,7 @@ export function TaskFormModal({
 
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
+  const [recordType, setRecordType] = useState<RecordType>(DEFAULT_RECORD_TYPE)
   const [startDateInput, setStartDateInput] = useState("")
   const [startTimeInput, setStartTimeInput] = useState("")
   const [endDateInput, setEndDateInput] = useState("")
@@ -91,6 +98,7 @@ export function TaskFormModal({
     if (isEdit && entry) {
       setTitle(entry.taskName)
       setDescription(entry.description)
+      setRecordType(normalizeRecordType(entry.type))
       setStartDateInput(toDateInputValue(entry.startTime))
       setStartTimeInput(toTimeInputValue(entry.startTime))
       setEndDateInput(toDateInputValue(entry.endTime))
@@ -99,6 +107,7 @@ export function TaskFormModal({
     } else if (isManual) {
       setTitle("")
       setDescription("")
+      setRecordType(DEFAULT_RECORD_TYPE)
       const now = new Date()
       const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
       setStartDateInput(toDateInputValue(oneHourAgo))
@@ -108,6 +117,7 @@ export function TaskFormModal({
     } else {
       setTitle("")
       setDescription("")
+      setRecordType(DEFAULT_RECORD_TYPE)
     }
   }, [open, isEdit, isManual, entry])
 
@@ -138,12 +148,13 @@ export function TaskFormModal({
       return
     }
     if (mode === "start") {
-      onStart?.(title.trim(), description.trim())
+      onStart?.(title.trim(), description.trim(), recordType)
     } else if (isEdit && entry && editedStartTime && editedEndTime) {
       onSave?.({
         ...entry,
         taskName: title.trim(),
         description: description.trim(),
+        type: recordType,
         startTime: editedStartTime,
         endTime: editedEndTime,
         duration: editedDuration,
@@ -153,6 +164,7 @@ export function TaskFormModal({
         id: crypto.randomUUID(),
         taskName: title.trim(),
         description: description.trim(),
+        type: recordType,
         startTime: editedStartTime,
         endTime: editedEndTime,
         duration: editedDuration,
@@ -207,6 +219,11 @@ export function TaskFormModal({
 
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <Label className="text-sm font-medium">{t("modal.label_type")}</Label>
+                <RecordTypeToggle value={recordType} onChange={setRecordType} className="w-full" />
+              </div>
+
               <div className="flex flex-col gap-2">
                 <Label htmlFor="task-title" className="text-sm font-medium">
                   {t("modal.label_title")}

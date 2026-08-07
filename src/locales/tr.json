@@ -59,8 +59,14 @@
     "empty_day_title": "Bu gün için kayıt yok",
     "empty_day_desc": "Başka bir gün seçin veya zaman kaydetmeye başlayın."
   },
+  "type": {
+    "label": "Tür",
+    "work": "İş",
+    "meet": "Toplantı"
+  },
   "table": {
     "col_task": "Görev",
+    "col_type": "Tür",
     "col_description": "Açıklama",
     "col_date": "Tarih",
     "col_started": "Başlangıç",
@@ -83,6 +89,7 @@
     "label_started": "Başlangıç",
     "label_stopped": "Bitiş",
     "label_duration": "Süre",
+    "label_type": "Tür",
     "label_title": "Başlık",
     "label_description": "Açıklama",
     "placeholder_title": "Ne üzerinde çalışıyorsun?",

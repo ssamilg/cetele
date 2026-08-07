@@ -19,7 +19,7 @@ import {
   CURRENCY_SYMBOLS,
   cancelDebouncedBackgroundSheetSync,
 } from "@/store/useTimerStore"
-import type { TimeRecord } from "@/types"
+import type { RecordType, TimeRecord } from "@/types"
 
 const APP_ENTERED_STORAGE_KEY = "cetele-app-entered"
 
@@ -85,14 +85,14 @@ export function App() {
 
   const handleStartStopClick = () => {
     if (isRunning && activeTask) {
-      stopTimer(activeTask.taskName, activeTask.description)
+      stopTimer(activeTask.taskName, activeTask.description, activeTask.type)
     } else {
       setTaskModalOpen(true)
     }
   }
 
-  const handleStart = (taskName: string, description: string) => {
-    startTimer(taskName, description)
+  const handleStart = (taskName: string, description: string, type: RecordType) => {
+    startTimer(taskName, description, type)
     setTaskModalOpen(false)
   }
 

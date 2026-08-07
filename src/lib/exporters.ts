@@ -1,13 +1,18 @@
-import type { TimeRecord } from "@/types"
+import { normalizeRecordType, type TimeRecord } from "@/types"
 import { formatDuration, formatSessionDateRange, formatTimeShort } from "@/lib/formatters"
 import type { Currency } from "@/store/useTimerStore"
 import { CURRENCY_LABELS, CURRENCY_SYMBOLS } from "@/store/useTimerStore"
+
+function typeLabel(type: TimeRecord["type"]): string {
+  return normalizeRecordType(type) === "meet" ? "Meet" : "Work"
+}
 
 export function exportToCsv(entries: TimeRecord[], hourlyRate = 0, currency: Currency = "USD"): void {
   const hasRate = hourlyRate > 0
   const earnedLabel = `Earned (${CURRENCY_LABELS[currency]})`
   const headers = [
     "Task",
+    "Type",
     "Description",
     "Date",
     "Started",
@@ -21,6 +26,7 @@ export function exportToCsv(entries: TimeRecord[], hourlyRate = 0, currency: Cur
       : null
     return [
       e.taskName,
+      typeLabel(e.type),
       e.description,
       formatSessionDateRange(e.startTime, e.endTime),
       formatTimeShort(e.startTime),

@@ -4,7 +4,8 @@ import { toast } from "sonner"
 import i18n from "@/i18n"
 import { createIdbStorage } from "@/lib/db"
 import { syncLogsToSheet, GoogleSheetsError } from "@/lib/googleSheets"
-import type { ActiveTask, TimeRecord, TimerState } from "@/types"
+import type { ActiveTask, RecordType, TimeRecord, TimerState } from "@/types"
+import { normalizeRecordType } from "@/types"
 
 export type Currency = "USD" | "EUR" | "TRY"
 export const CURRENCY_LABELS: Record<Currency, string> = { USD: "USD", EUR: "EUR", TRY: "TL" }
@@ -28,8 +29,8 @@ interface PrefsStoreState {
 type PersistedState = TimerStoreState & Pick<SyncStoreState, "spreadsheetId"> & PrefsStoreState
 
 interface TimerStoreActions {
-  startTimer: (taskName: string, description: string) => void
-  stopTimer: (taskName: string, description: string) => void
+  startTimer: (taskName: string, description: string, type?: RecordType) => void
+  stopTimer: (taskName: string, description: string, type?: RecordType) => void
   addEntry: (entry: TimeRecord) => void
   updateEntry: (entry: TimeRecord) => void
   deleteEntry: (id: string) => void
@@ -103,12 +104,17 @@ export const useTimerStore = create<TimerStore>()(
       hourlyRate: 0,
       currency: "USD" as Currency,
 
-      startTimer: (taskName, description) => {
-        const activeTask: ActiveTask = { taskName, description, startTime: new Date() }
+      startTimer: (taskName, description, type = "work") => {
+        const activeTask: ActiveTask = {
+          taskName,
+          description,
+          type: normalizeRecordType(type),
+          startTime: new Date(),
+        }
         set({ timer: { isRunning: true, activeTask } })
       },
 
-      stopTimer: (taskName, description) => {
+      stopTimer: (taskName, description, type) => {
         const state = get()
         if (!state.timer.activeTask) return
 
@@ -120,6 +126,7 @@ export const useTimerStore = create<TimerStore>()(
           id: crypto.randomUUID(),
           taskName,
           description,
+          type: normalizeRecordType(type ?? state.timer.activeTask.type),
           startTime: state.timer.activeTask.startTime,
           endTime,
           duration,
@@ -186,13 +193,36 @@ export const useTimerStore = create<TimerStore>()(
       storage: createIdbStorage<PersistedState>(() => {
         toast.error(i18n.t("toast.save_failed"))
       }),
-        partialize: (state): PersistedState => ({
+      partialize: (state): PersistedState => ({
         records: state.records,
         timer: state.timer,
         spreadsheetId: state.spreadsheetId,
         hourlyRate: state.hourlyRate,
         currency: state.currency,
       }),
+      merge: (persisted, current) => {
+        const stored = (persisted ?? {}) as Partial<PersistedState>
+        const records = (stored.records ?? []).map((record) => ({
+          ...record,
+          type: normalizeRecordType(record.type),
+        }))
+        const activeTask = stored.timer?.activeTask
+          ? {
+              ...stored.timer.activeTask,
+              type: normalizeRecordType(stored.timer.activeTask.type),
+            }
+          : null
+        const timer = stored.timer
+          ? { ...stored.timer, activeTask }
+          : current.timer
+
+        return {
+          ...current,
+          ...stored,
+          records,
+          timer,
+        }
+      },
     },
   ),
 )

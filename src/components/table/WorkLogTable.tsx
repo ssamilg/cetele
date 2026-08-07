@@ -1,5 +1,5 @@
 import { Fragment } from "react"
-import { Clock, FileText } from "lucide-react"
+import { Briefcase, Clock, FileText, Users } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -21,7 +21,7 @@ import {
   todayDateKey,
 } from "@/lib/formatters"
 import { useTimerStore, CURRENCY_SYMBOLS } from "@/store/useTimerStore"
-import type { TimeRecord } from "@/types"
+import { normalizeRecordType, type RecordType, type TimeRecord } from "@/types"
 import type { Currency } from "@/store/useTimerStore"
 
 interface WorkLogTableProps {
@@ -74,6 +74,20 @@ function groupEntriesByDay(entries: TimeRecord[]): DayGroup[] {
   return Array.from(groups.values())
 }
 
+function TypeCell({ type }: { type: RecordType }) {
+  const { t } = useTranslation()
+  const recordType = normalizeRecordType(type)
+  const isMeet = recordType === "meet"
+  const Icon = isMeet ? Users : Briefcase
+
+  return (
+    <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+      <Icon className="size-3.5 shrink-0" />
+      <span className="truncate">{t(isMeet ? "type.meet" : "type.work")}</span>
+    </span>
+  )
+}
+
 export function WorkLogTable({
   entries,
   onEdit,
@@ -84,7 +98,7 @@ export function WorkLogTable({
   const { t } = useTranslation()
   const currency = useTimerStore((s) => s.currency)
   const todayKey = todayDateKey()
-  const columnCount = hourlyRate > 0 ? 7 : 6
+  const columnCount = hourlyRate > 0 ? 8 : 7
 
   if (entries.length === 0) {
     return (
@@ -108,11 +122,14 @@ export function WorkLogTable({
       <Table className="min-w-[640px]">
         <TableHeader>
           <TableRow className="border-b border-border bg-muted/40 hover:bg-muted/40">
-            <TableHead className="w-[220px] pl-4 font-semibold text-foreground">
+            <TableHead className="w-[200px] pl-4 font-semibold text-foreground">
               {t("table.col_task")}
             </TableHead>
-            <TableHead className="w-[260px] font-semibold text-foreground">
+            <TableHead className="w-[180px] font-semibold text-foreground">
               {t("table.col_description")}
+            </TableHead>
+            <TableHead className="w-[88px] font-semibold text-foreground">
+              {t("table.col_type")}
             </TableHead>
             <TableHead className="w-[150px] font-semibold text-foreground">
               {t("table.col_date")}
@@ -186,7 +203,7 @@ export function WorkLogTable({
                     </TableCell>
                     <TableCell className="py-3.5">
                       {entry.description ? (
-                        <span className="line-clamp-2 max-w-72 text-sm text-muted-foreground">
+                        <span className="line-clamp-2 max-w-48 text-sm text-muted-foreground">
                           {entry.description}
                         </span>
                       ) : (
@@ -195,6 +212,9 @@ export function WorkLogTable({
                           {t("table.no_description")}
                         </span>
                       )}
+                    </TableCell>
+                    <TableCell className="py-3.5">
+                      <TypeCell type={entry.type} />
                     </TableCell>
                     <TableCell className="py-3.5 text-sm text-muted-foreground">
                       {formatSessionDateRange(entry.startTime, entry.endTime)}
@@ -229,7 +249,7 @@ export function WorkLogTable({
         </TableBody>
         <TableFooter>
           <TableRow className="bg-muted/20 hover:bg-muted/20">
-            <TableCell colSpan={5} className="px-4 py-3 text-sm text-muted-foreground">
+            <TableCell colSpan={6} className="px-4 py-3 text-sm text-muted-foreground">
               {t("table.entry_count", { count: entries.length })}
             </TableCell>
             <TableCell className="py-3">

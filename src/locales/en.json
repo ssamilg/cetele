@@ -59,8 +59,14 @@
     "empty_day_title": "No entries for this day",
     "empty_day_desc": "Pick another day or start tracking to log time."
   },
+  "type": {
+    "label": "Type",
+    "work": "Work",
+    "meet": "Meet"
+  },
   "table": {
     "col_task": "Task",
+    "col_type": "Type",
     "col_description": "Description",
     "col_date": "Date",
     "col_started": "Started",
@@ -83,6 +89,7 @@
     "label_started": "Started",
     "label_stopped": "Stopped",
     "label_duration": "Duration",
+    "label_type": "Type",
     "label_title": "Title",
     "label_description": "Description",
     "placeholder_title": "What are you working on?",

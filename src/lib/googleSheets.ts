@@ -1,4 +1,4 @@
-import type { TimeRecord } from "@/types"
+import { normalizeRecordType, type TimeRecord } from "@/types"
 import { formatDuration, formatSessionDateRange, formatTimeShort } from "@/lib/formatters"
 import type { Currency } from "@/store/useTimerStore"
 import { CURRENCY_LABELS, CURRENCY_SYMBOLS } from "@/store/useTimerStore"
@@ -12,7 +12,11 @@ export class GoogleSheetsError extends Error {
   }
 }
 
-const BASE_HEADERS = ["Task", "Description", "Date", "Started", "Stopped", "Duration"]
+const BASE_HEADERS = ["Task", "Type", "Description", "Date", "Started", "Stopped", "Duration"]
+
+function typeLabel(type: TimeRecord["type"]): string {
+  return normalizeRecordType(type) === "meet" ? "Meet" : "Work"
+}
 
 function buildRows(records: TimeRecord[], hourlyRate: number, currency: Currency): string[][] {
   const hasRate = hourlyRate > 0
@@ -22,6 +26,7 @@ function buildRows(records: TimeRecord[], hourlyRate: number, currency: Currency
       : null
     return [
       r.taskName,
+      typeLabel(r.type),
       r.description || "No description",
       formatSessionDateRange(r.startTime, r.endTime),
       formatTimeShort(r.startTime),
