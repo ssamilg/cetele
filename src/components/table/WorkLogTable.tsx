@@ -30,6 +30,7 @@ interface WorkLogTableProps {
   hourlyRate?: number
   emptyTitle?: string
   emptyDescription?: string
+  showDayRows?: boolean
 }
 
 interface DayGroup {
@@ -94,6 +95,7 @@ export function WorkLogTable({
   hourlyRate = 0,
   emptyTitle,
   emptyDescription,
+  showDayRows = true,
 }: WorkLogTableProps) {
   const { t } = useTranslation()
   const currency = useTimerStore((s) => s.currency)
@@ -152,34 +154,34 @@ export function WorkLogTable({
         </TableHeader>
         <TableBody>
           {dayGroups.map((group) => {
-            const dayLabel = group.key === todayKey
-              ? t("day_filter.today")
-              : formatDate(group.date)
-
             return (
               <Fragment key={group.key}>
-                <TableRow className="border-y border-border/80 bg-muted/20 hover:bg-muted/20">
-                  <TableCell colSpan={Math.max(columnCount - 2, 1)} className="py-2 pl-4">
-                    <span className="text-xs font-semibold tracking-wide text-foreground uppercase">
-                      {dayLabel}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-2">
-                    <span className="font-mono text-sm font-semibold tabular-nums tracking-tight text-foreground">
-                      {formatDuration(group.totalSeconds)}
-                    </span>
-                  </TableCell>
-                  {hourlyRate > 0 && (
-                    <TableCell className="py-2">
-                      <span
-                        className="font-mono text-sm font-semibold tabular-nums tracking-tight
-                          text-green-600 dark:text-green-400"
-                      >
-                        {formatEarned(group.totalSeconds, hourlyRate, currency)}
+                {showDayRows && (
+                  <TableRow className="border-y border-border/80 bg-muted/20 hover:bg-muted/20">
+                    <TableCell colSpan={Math.max(columnCount - 2, 1)} className="py-2 pl-4">
+                      <span className="text-xs font-semibold tracking-wide text-foreground uppercase">
+                        {group.key === todayKey
+                          ? t("day_filter.today")
+                          : formatDate(group.date)}
                       </span>
                     </TableCell>
-                  )}
-                </TableRow>
+                    <TableCell className="py-2">
+                      <span className="font-mono text-sm font-semibold tabular-nums tracking-tight text-foreground">
+                        {formatDuration(group.totalSeconds)}
+                      </span>
+                    </TableCell>
+                    {hourlyRate > 0 && (
+                      <TableCell className="py-2">
+                        <span
+                          className="font-mono text-sm font-semibold tabular-nums tracking-tight
+                            text-green-600 dark:text-green-400"
+                        >
+                          {formatEarned(group.totalSeconds, hourlyRate, currency)}
+                        </span>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                )}
                 {group.entries.map((entry) => (
                   <TableRow
                     key={entry.id}

@@ -296,6 +296,7 @@ export function App() {
               entries={filteredRecords}
               onEdit={handleEditEntry}
               hourlyRate={hourlyRate}
+              showDayRows={selectedDayKey === ALL_DAYS_KEY}
               emptyTitle={
                 selectedDayKey !== ALL_DAYS_KEY && records.length > 0
                   ? t("day_filter.empty_day_title")
