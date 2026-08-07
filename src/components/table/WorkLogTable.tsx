@@ -233,19 +233,18 @@ export function WorkLogTable({
               {t("table.entry_count", { count: entries.length })}
             </TableCell>
             <TableCell className="py-3">
-              <Badge variant="outline" className="rounded-md font-mono text-xs tabular-nums">
+              <span className="font-mono text-sm font-semibold tabular-nums tracking-tight text-foreground">
                 {formatDuration(totalSeconds)}
-              </Badge>
+              </span>
             </TableCell>
             {hourlyRate > 0 && (
               <TableCell className="py-3">
-                <Badge
-                  variant="outline"
-                  className="rounded-md font-mono text-xs tabular-nums text-green-600
-                    border-green-300 dark:text-green-400 dark:border-green-800"
+                <span
+                  className="font-mono text-sm font-semibold tabular-nums tracking-tight
+                    text-green-600 dark:text-green-400"
                 >
                   {formatEarned(totalSeconds, hourlyRate, currency)}
-                </Badge>
+                </span>
               </TableCell>
             )}
           </TableRow>
