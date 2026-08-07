@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { formatDate, toDateKey, todayDateKey, ALL_DAYS_KEY } from "@/lib/formatters"
-import type { TimeRecord } from "@/types"
+import { ALL_TYPES_KEY, type TimeRecord, type TypeFilterKey } from "@/types"
 
 export { ALL_DAYS_KEY }
 
@@ -15,7 +15,11 @@ interface DayFilterProps {
   records: TimeRecord[]
   selectedDayKey: string
   onSelectDay: (key: string) => void
+  selectedTypeKey: TypeFilterKey
+  onSelectType: (key: TypeFilterKey) => void
 }
+
+const TYPE_OPTIONS: TypeFilterKey[] = ["work", "meet", ALL_TYPES_KEY]
 
 function buildDaySummaries(records: TimeRecord[]): {
   prevDays: DaySummary[]
@@ -52,10 +56,25 @@ function buildDaySummaries(records: TimeRecord[]): {
   return { prevDays, today }
 }
 
+function typeLabel(
+  key: TypeFilterKey,
+  t: (key: string) => string,
+): string {
+  let label = t("day_filter.all")
+  if (key === "work") {
+    label = t("type.work")
+  } else if (key === "meet") {
+    label = t("type.meet")
+  }
+  return label
+}
+
 export function DayFilter({
   records,
   selectedDayKey,
   onSelectDay,
+  selectedTypeKey,
+  onSelectType,
 }: DayFilterProps) {
   const { t } = useTranslation()
   const selectedRef = useRef<HTMLButtonElement>(null)
@@ -67,12 +86,35 @@ export function DayFilter({
   }, [selectedDayKey, prevDays.length])
 
   return (
-    <div
-      role="toolbar"
-      aria-label={t("day_filter.aria")}
-      className="flex min-w-0 items-center gap-2 overflow-x-auto pb-0.5 [scrollbar-width:thin]"
-    >
-      <div className="ml-auto flex items-center gap-1.5">
+    <div className="flex min-w-0 items-center gap-3 overflow-x-auto pb-0.5 [scrollbar-width:thin]">
+      <div
+        role="toolbar"
+        aria-label={t("type_filter.aria")}
+        className="flex shrink-0 items-center gap-1.5"
+      >
+        {TYPE_OPTIONS.map((key) => {
+          const isSelected = key === selectedTypeKey
+          return (
+            <Button
+              key={key}
+              type="button"
+              size="sm"
+              variant={isSelected ? "default" : "outline"}
+              aria-pressed={isSelected}
+              onClick={() => onSelectType(key)}
+              className="shrink-0"
+            >
+              {typeLabel(key, t)}
+            </Button>
+          )
+        })}
+      </div>
+
+      <div
+        role="toolbar"
+        aria-label={t("day_filter.aria")}
+        className="ml-auto flex items-center gap-1.5"
+      >
         {prevDays.map((day) => {
           const isSelected = day.key === selectedDayKey
           return (

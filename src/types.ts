@@ -1,6 +1,8 @@
 export type RecordType = "work" | "meet"
 
 export const DEFAULT_RECORD_TYPE: RecordType = "work"
+export const ALL_TYPES_KEY = "all" as const
+export type TypeFilterKey = RecordType | typeof ALL_TYPES_KEY
 
 export function normalizeRecordType(type: unknown): RecordType {
   let result: RecordType = DEFAULT_RECORD_TYPE

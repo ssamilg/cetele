@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ALL_DAYS_KEY, formatDate, formatDuration, toDateKey, todayDateKey } from "@/lib/formatters"
 import { useTimerStore, CURRENCY_SYMBOLS } from "@/store/useTimerStore"
 import type { Currency } from "@/store/useTimerStore"
+import { ALL_TYPES_KEY, normalizeRecordType, type TypeFilterKey } from "@/types"
 import { cn } from "@/lib/utils"
 
 function formatEarned(totalSeconds: number, hourlyRate: number, currency: Currency): string {
@@ -46,17 +47,22 @@ function StatCard({ icon, label, value, iconClassName }: StatCardProps) {
 
 interface DailyStatsProps {
   selectedDayKey: string
+  selectedTypeKey: TypeFilterKey
 }
 
-export function DailyStats({ selectedDayKey }: DailyStatsProps) {
+export function DailyStats({ selectedDayKey, selectedTypeKey }: DailyStatsProps) {
   const { t } = useTranslation()
   const records = useTimerStore((s) => s.records)
   const hourlyRate = useTimerStore((s) => s.hourlyRate)
   const currency = useTimerStore((s) => s.currency)
 
-  const filteredRecords = selectedDayKey === ALL_DAYS_KEY
-    ? records
-    : records.filter((r) => toDateKey(r.startTime) === selectedDayKey)
+  const filteredRecords = records.filter((r) => {
+    const dayMatch =
+      selectedDayKey === ALL_DAYS_KEY || toDateKey(r.startTime) === selectedDayKey
+    const typeMatch =
+      selectedTypeKey === ALL_TYPES_KEY || normalizeRecordType(r.type) === selectedTypeKey
+    return dayMatch && typeMatch
+  })
 
   const totalSeconds = filteredRecords.reduce((sum, r) => sum + r.duration, 0)
   const taskCount = filteredRecords.length

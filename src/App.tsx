@@ -19,7 +19,8 @@ import {
   CURRENCY_SYMBOLS,
   cancelDebouncedBackgroundSheetSync,
 } from "@/store/useTimerStore"
-import type { TimeRecord } from "@/types"
+import type { TimeRecord, TypeFilterKey } from "@/types"
+import { ALL_TYPES_KEY, normalizeRecordType } from "@/types"
 
 const APP_ENTERED_STORAGE_KEY = "cetele-app-entered"
 
@@ -57,13 +58,19 @@ export function App() {
   const [editingEntry, setEditingEntry] = useState<TimeRecord | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [selectedDayKey, setSelectedDayKey] = useState(ALL_DAYS_KEY)
+  const [selectedTypeKey, setSelectedTypeKey] = useState<TypeFilterKey>(ALL_TYPES_KEY)
 
   const filteredRecords = useMemo(
     () =>
-      selectedDayKey === ALL_DAYS_KEY
-        ? records
-        : records.filter((r) => toDateKey(r.startTime) === selectedDayKey),
-    [records, selectedDayKey],
+      records.filter((r) => {
+        const dayMatch =
+          selectedDayKey === ALL_DAYS_KEY || toDateKey(r.startTime) === selectedDayKey
+        const typeMatch =
+          selectedTypeKey === ALL_TYPES_KEY ||
+          normalizeRecordType(r.type) === selectedTypeKey
+        return dayMatch && typeMatch
+      }),
+    [records, selectedDayKey, selectedTypeKey],
   )
 
   useEffect(() => {
@@ -285,12 +292,14 @@ export function App() {
             </div>
           </div>
 
-          <DailyStats selectedDayKey={selectedDayKey} />
+          <DailyStats selectedDayKey={selectedDayKey} selectedTypeKey={selectedTypeKey} />
           <div className="flex flex-col gap-6">
             <DayFilter
               records={records}
               selectedDayKey={selectedDayKey}
               onSelectDay={setSelectedDayKey}
+              selectedTypeKey={selectedTypeKey}
+              onSelectType={setSelectedTypeKey}
             />
             <WorkLogTable
               entries={filteredRecords}

@@ -68,6 +68,9 @@
     "work": "İş",
     "meet": "Toplantı"
   },
+  "type_filter": {
+    "aria": "Türe göre filtrele"
+  },
   "table": {
     "col_task": "Görev",
     "col_type": "Tür",

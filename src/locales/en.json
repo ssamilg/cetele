@@ -68,6 +68,9 @@
     "work": "Work",
     "meet": "Meet"
   },
+  "type_filter": {
+    "aria": "Filter by type"
+  },
   "table": {
     "col_task": "Task",
     "col_type": "Type",
