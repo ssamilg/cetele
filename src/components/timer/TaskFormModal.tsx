@@ -23,10 +23,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { formatDuration } from "@/lib/formatters"
-import { cn } from "@/lib/utils"
 import type { TimeRecord } from "@/types"
 
 interface TaskFormModalProps {
@@ -39,7 +37,6 @@ interface TaskFormModalProps {
   onCancel: () => void
 }
 
-
 function toDateInputValue(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0")
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
@@ -51,7 +48,9 @@ function toTimeInputValue(date: Date): string {
 }
 
 function combineDateTime(dateStr: string, timeStr: string): Date | null {
-  if (!dateStr || !timeStr) return null
+  if (!dateStr || !timeStr) {
+    return null
+  }
   return new Date(`${dateStr}T${timeStr}`)
 }
 
@@ -85,7 +84,9 @@ export function TaskFormModal({
   const [deleteConfirm, setDeleteConfirm] = useState(false)
 
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      return
+    }
     if (isEdit && entry) {
       setTitle(entry.taskName)
       setDescription(entry.description)
@@ -121,17 +122,20 @@ export function TaskFormModal({
       ? Math.max(0, Math.floor((editedEndTime.getTime() - editedStartTime.getTime()) / 1000))
       : 0
 
-
   const applyQuickSpan = (minutes: number) => {
     const start = combineDateTime(startDateInput, startTimeInput)
-    if (!start) return
+    if (!start) {
+      return
+    }
     const end = new Date(start.getTime() + minutes * 60 * 1000)
     setEndDateInput(toDateInputValue(end))
     setEndTimeInput(toTimeInputValue(end))
   }
 
   const handleSubmit = () => {
-    if (!title.trim() || !isTimeValid) return
+    if (!title.trim() || !isTimeValid) {
+      return
+    }
     if (mode === "start") {
       onStart?.(title.trim(), description.trim())
     } else if (isEdit && entry && editedStartTime && editedEndTime) {
@@ -156,163 +160,170 @@ export function TaskFormModal({
   }
 
   const handleDelete = () => {
-    if (entry) onDelete?.(entry.id)
+    if (entry) {
+      onDelete?.(entry.id)
+    }
     setDeleteConfirm(false)
   }
 
   return (
     <>
       <Dialog open={open && !deleteConfirm} onOpenChange={(o) => { if (!o) onCancel() }}>
-        <DialogContent className="md:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+        <DialogContent className="gap-6 md:max-w-md sm:p-7">
+          <DialogHeader className="gap-3">
+            <DialogTitle className="flex items-center gap-3 text-left">
               {isEdit && (
                 <>
-                  <div className="flex size-7 items-center justify-center rounded-md bg-primary/10">
-                    <Pencil className="size-4 text-primary" />
+                  <div className="flex size-9 items-center justify-center rounded-xl text-primary">
+                    <Pencil className="size-4" />
                   </div>
                   {t("modal.edit_title")}
                 </>
               )}
               {isManual && (
                 <>
-                  <div className="flex size-7 items-center justify-center rounded-md bg-primary/10">
-                    <TimerIcon className="size-4 text-primary" />
+                  <div className="flex size-9 items-center justify-center rounded-xl text-primary">
+                    <TimerIcon className="size-4" />
                   </div>
                   {t("modal.manual_title")}
                 </>
               )}
               {mode === "start" && (
                 <>
-                  <div className="flex size-7 items-center justify-center rounded-md bg-primary/10">
-                    <Play className="size-4 text-primary fill-primary" />
+                  <div className="flex size-9 items-center justify-center rounded-xl text-primary">
+                    <Play className="size-4 fill-primary" />
                   </div>
                   {t("modal.start_title")}
                 </>
               )}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-left text-sm leading-relaxed">
               {isEdit && t("modal.edit_desc")}
               {isManual && t("modal.manual_desc")}
               {mode === "start" && t("modal.start_desc")}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="task-title" className="text-sm font-medium">
+                  {t("modal.label_title")}
+                  <span className="text-destructive"> *</span>
+                </Label>
+                <Input
+                  id="task-title"
+                  placeholder={t("modal.placeholder_title")}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSubmit() }}
+                  autoFocus={!isEdit}
+                  className="h-11 text-base"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="task-desc" className="font-normal text-muted-foreground">
+                  {t("modal.label_description")}
+                </Label>
+                <Textarea
+                  id="task-desc"
+                  placeholder={t("modal.placeholder_desc")}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="min-h-20 resize-none"
+                  rows={3}
+                />
+              </div>
+            </div>
+
             {isEditLike && (
-              <>
-                <div className="flex flex-col gap-3">
-                  <div className="flex flex-col gap-1.5">
-                    <Label>{t("modal.label_started")}</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        type="date"
-                        value={startDateInput}
-                        onChange={(e) => setStartDateInput(e.target.value)}
-                        className="flex-1 dark:[color-scheme:dark]"
-                      />
-                      <Input
-                        type="time"
-                        value={startTimeInput}
-                        onChange={(e) => setStartTimeInput(e.target.value)}
-                        className="w-28 dark:[color-scheme:dark]"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <div className="grid grid-cols-4 gap-2">
-                      {QUICK_SPANS.map(({ label, minutes }) => {
-                        const isQuickSpanActive =
-                          isTimeValid && editedDuration === minutes * 60
-                        return (
-                          <Button
-                            key={minutes}
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => applyQuickSpan(minutes)}
-                            className={cn(
-                              "w-full",
-                              isQuickSpanActive &&
-                                "ring-2 ring-primary bg-primary/10 text-foreground",
-                            )}
-                          >
-                            {label}
-                          </Button>
-                        )
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <Label>{t("modal.label_stopped")}</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        type="date"
-                        value={endDateInput}
-                        onChange={(e) => setEndDateInput(e.target.value)}
-                        className="flex-1 dark:[color-scheme:dark]"
-                      />
-                      <Input
-                        type="time"
-                        value={endTimeInput}
-                        onChange={(e) => setEndTimeInput(e.target.value)}
-                        className="w-28 dark:[color-scheme:dark]"
-                      />
-                    </div>
-                  </div>
-
-                  {isTimeValid && editedDuration > 0 && (
-                    <div className="flex items-center gap-2">
-                      <Clock className="size-3.5 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">{t("modal.label_duration")}</span>
-                      <Badge variant="secondary" className="ml-auto font-mono text-xs">
-                        {formatDuration(editedDuration)}
-                      </Badge>
-                    </div>
-                  )}
-
-                  {!isTimeValid && startDateInput && endDateInput && (
-                    <p className="text-xs text-destructive">{t("modal.time_error")}</p>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-medium text-foreground">
+                    {t("modal.label_duration")}
+                  </span>
+                  {isTimeValid && editedDuration > 0 ? (
+                    <Badge
+                      variant="default"
+                      className="gap-1.5 rounded-md px-2.5 font-mono text-xs tabular-nums"
+                    >
+                      <Clock className="size-3.5" />
+                      {formatDuration(editedDuration)}
+                    </Badge>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">—</span>
                   )}
                 </div>
 
-                <Separator />
-              </>
+                <div className="flex flex-col gap-2">
+                  <Label className="text-muted-foreground">{t("modal.label_started")}</Label>
+                  <div className="flex gap-2.5">
+                    <Input
+                      type="date"
+                      value={startDateInput}
+                      onChange={(e) => setStartDateInput(e.target.value)}
+                      className="h-10 flex-1 dark:[color-scheme:dark]"
+                    />
+                    <Input
+                      type="time"
+                      value={startTimeInput}
+                      onChange={(e) => setStartTimeInput(e.target.value)}
+                      className="h-10 w-28 dark:[color-scheme:dark]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-4 gap-2">
+                  {QUICK_SPANS.map(({ label, minutes }) => {
+                    const isQuickSpanActive =
+                      isTimeValid && editedDuration === minutes * 60
+                    return (
+                      <Button
+                        key={minutes}
+                        type="button"
+                        variant={isQuickSpanActive ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => applyQuickSpan(minutes)}
+                        className="h-9 w-full"
+                      >
+                        {label}
+                      </Button>
+                    )
+                  })}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label className="text-muted-foreground">{t("modal.label_stopped")}</Label>
+                  <div className="flex gap-2.5">
+                    <Input
+                      type="date"
+                      value={endDateInput}
+                      onChange={(e) => setEndDateInput(e.target.value)}
+                      className="h-10 flex-1 dark:[color-scheme:dark]"
+                    />
+                    <Input
+                      type="time"
+                      value={endTimeInput}
+                      onChange={(e) => setEndTimeInput(e.target.value)}
+                      className="h-10 w-28 dark:[color-scheme:dark]"
+                    />
+                  </div>
+                </div>
+
+                {!isTimeValid && startDateInput && endDateInput && (
+                  <p className="text-xs text-destructive">{t("modal.time_error")}</p>
+                )}
+              </div>
             )}
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="task-title">{t("modal.label_title")} <span className="text-destructive">*</span></Label>
-              <Input
-                id="task-title"
-                placeholder={t("modal.placeholder_title")}
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") handleSubmit() }}
-                autoFocus={!isEdit}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="task-desc">{t("modal.label_description")}</Label>
-              <Textarea
-                id="task-desc"
-                placeholder={t("modal.placeholder_desc")}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="resize-none"
-                rows={3}
-              />
-            </div>
           </div>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 sm:gap-2">
             {isEdit && (
               <Button
                 variant="ghost"
                 onClick={() => setDeleteConfirm(true)}
-                className="text-destructive hover:text-destructive hover:bg-destructive/10 mr-auto"
+                className="mr-auto text-destructive hover:bg-destructive/10 hover:text-destructive"
               >
                 <Trash2 className="size-3.5" />
                 {t("modal.btn_delete")}
