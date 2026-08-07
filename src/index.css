@@ -52,46 +52,47 @@
   Theme: violet
   Mode:  light (:root) / dark (.dark)
 
+  Light canvas: soft cool slate paper (not near-white)
   Primary (light): hsl(262.1 83.3% 57.8%)
   Primary (dark):  hsl(263.4 70% 50.4%)
 
-  Source: https://ui.shadcn.com/themes
+  Source: https://ui.shadcn.com/themes (light neutrals tuned for glare)
   ============================================================
 */
 
 :root {
   --radius: 0.625rem;
-  --background: hsl(0 0% 98%);
-  --foreground: hsl(224 71.4% 4.1%);
-  --card: hsl(0 0% 100%);
-  --card-foreground: hsl(224 71.4% 4.1%);
-  --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(224 71.4% 4.1%);
+  --background: hsl(224 18% 92%);
+  --foreground: hsl(224 40% 12%);
+  --card: hsl(220 28% 97%);
+  --card-foreground: hsl(224 40% 12%);
+  --popover: hsl(220 28% 97%);
+  --popover-foreground: hsl(224 40% 12%);
   --primary: hsl(262.1 83.3% 57.8%);
   --primary-foreground: hsl(210 20% 98%);
-  --secondary: hsl(220 14.3% 95.9%);
-  --secondary-foreground: hsl(220.9 39.3% 11%);
-  --muted: hsl(220 14.3% 95.9%);
-  --muted-foreground: hsl(220 8.9% 46.1%);
-  --accent: hsl(220 14.3% 95.9%);
-  --accent-foreground: hsl(220.9 39.3% 11%);
+  --secondary: hsl(224 14% 88%);
+  --secondary-foreground: hsl(224 35% 16%);
+  --muted: hsl(224 14% 88%);
+  --muted-foreground: hsl(224 12% 38%);
+  --accent: hsl(224 14% 88%);
+  --accent-foreground: hsl(224 35% 16%);
   --destructive: hsl(0 84.2% 60.2%);
   --destructive-foreground: hsl(210 20% 98%);
-  --border: hsl(220 13% 91%);
-  --input: hsl(220 13% 91%);
+  --border: hsl(224 12% 82%);
+  --input: hsl(224 12% 82%);
   --ring: hsl(262.1 83.3% 57.8%);
   --chart-1: hsl(12 76% 61%);
   --chart-2: hsl(173 58% 39%);
   --chart-3: hsl(197 37% 24%);
   --chart-4: hsl(43 74% 66%);
   --chart-5: hsl(27 87% 67%);
-  --sidebar: hsl(0 0% 98%);
-  --sidebar-foreground: hsl(224 71.4% 4.1%);
+  --sidebar: hsl(224 18% 92%);
+  --sidebar-foreground: hsl(224 40% 12%);
   --sidebar-primary: hsl(262.1 83.3% 57.8%);
   --sidebar-primary-foreground: hsl(210 20% 98%);
-  --sidebar-accent: hsl(220 14.3% 95.9%);
-  --sidebar-accent-foreground: hsl(220.9 39.3% 11%);
-  --sidebar-border: hsl(220 13% 91%);
+  --sidebar-accent: hsl(224 14% 88%);
+  --sidebar-accent-foreground: hsl(224 35% 16%);
+  --sidebar-border: hsl(224 12% 82%);
   --sidebar-ring: hsl(262.1 83.3% 57.8%);
 }
 
