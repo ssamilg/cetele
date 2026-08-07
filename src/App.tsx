@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { Download, Sheet } from "lucide-react"
+import { Download, ListFilter, Sheet } from "lucide-react"
 import { Navbar } from "@/components/timer/Navbar"
 import { TaskFormModal } from "@/components/timer/TaskFormModal"
 import { GoogleOAuthModal } from "@/components/sync/GoogleOAuthModal"
@@ -23,6 +23,13 @@ import type { TimeRecord, TypeFilterKey } from "@/types"
 import { ALL_TYPES_KEY, normalizeRecordType } from "@/types"
 
 const APP_ENTERED_STORAGE_KEY = "cetele-app-entered"
+const FILTERS_STORAGE_KEY = "cetele-filters"
+
+interface StoredFilters {
+  visible: boolean
+  dayKey: string
+  typeKey: TypeFilterKey
+}
 
 function readAppEnteredFromStorage(): boolean {
   let entered = false
@@ -32,6 +39,41 @@ function readAppEnteredFromStorage(): boolean {
     entered = false
   }
   return entered
+}
+
+function isTypeFilterKey(value: unknown): value is TypeFilterKey {
+  return value === ALL_TYPES_KEY || value === "work" || value === "meet"
+}
+
+function readFiltersFromStorage(): StoredFilters {
+  const defaults: StoredFilters = {
+    visible: false,
+    dayKey: ALL_DAYS_KEY,
+    typeKey: ALL_TYPES_KEY,
+  }
+  let result = defaults
+  try {
+    const raw = localStorage.getItem(FILTERS_STORAGE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<StoredFilters>
+      result = {
+        visible: parsed.visible === true,
+        dayKey: typeof parsed.dayKey === "string" ? parsed.dayKey : ALL_DAYS_KEY,
+        typeKey: isTypeFilterKey(parsed.typeKey) ? parsed.typeKey : ALL_TYPES_KEY,
+      }
+    }
+  } catch {
+    result = defaults
+  }
+  return result
+}
+
+function writeFiltersToStorage(filters: StoredFilters) {
+  try {
+    localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters))
+  } catch {
+    // ignore quota / private mode
+  }
 }
 
 export function App() {
@@ -57,8 +99,12 @@ export function App() {
   const [googleModalOpen, setGoogleModalOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<TimeRecord | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
-  const [selectedDayKey, setSelectedDayKey] = useState(ALL_DAYS_KEY)
-  const [selectedTypeKey, setSelectedTypeKey] = useState<TypeFilterKey>(ALL_TYPES_KEY)
+  const [storedFilters] = useState(readFiltersFromStorage)
+  const [filtersVisible, setFiltersVisible] = useState(storedFilters.visible)
+  const [selectedDayKey, setSelectedDayKey] = useState(storedFilters.dayKey)
+  const [selectedTypeKey, setSelectedTypeKey] = useState<TypeFilterKey>(
+    storedFilters.typeKey,
+  )
 
   const filteredRecords = useMemo(
     () =>
@@ -72,6 +118,14 @@ export function App() {
       }),
     [records, selectedDayKey, selectedTypeKey],
   )
+
+  useEffect(() => {
+    writeFiltersToStorage({
+      visible: filtersVisible,
+      dayKey: selectedDayKey,
+      typeKey: selectedTypeKey,
+    })
+  }, [filtersVisible, selectedDayKey, selectedTypeKey])
 
   useEffect(() => {
     return () => {
@@ -289,11 +343,22 @@ export function App() {
                 <Sheet className="size-3.5" />
                 {t("app.sync_sheets")}
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                aria-pressed={filtersVisible}
+                aria-label={t("app.toggle_filters_aria")}
+                onClick={() => setFiltersVisible((open) => !open)}
+                className="gap-1.5 text-foreground border-foreground/20 hover:bg-accent
+                  hover:text-foreground dark:border-foreground/35 dark:hover:bg-accent"
+              >
+                <ListFilter className="size-3.5" />
+                {t("app.toggle_filters")}
+              </Button>
             </div>
           </div>
 
-          <DailyStats selectedDayKey={selectedDayKey} selectedTypeKey={selectedTypeKey} />
-          <div className="flex flex-col gap-6">
+          {filtersVisible && (
             <DayFilter
               records={records}
               selectedDayKey={selectedDayKey}
@@ -301,23 +366,25 @@ export function App() {
               selectedTypeKey={selectedTypeKey}
               onSelectType={setSelectedTypeKey}
             />
-            <WorkLogTable
-              entries={filteredRecords}
-              onEdit={handleEditEntry}
-              hourlyRate={hourlyRate}
-              showDayRows={selectedDayKey === ALL_DAYS_KEY}
-              emptyTitle={
-                selectedDayKey !== ALL_DAYS_KEY && records.length > 0
-                  ? t("day_filter.empty_day_title")
-                  : undefined
-              }
-              emptyDescription={
-                selectedDayKey !== ALL_DAYS_KEY && records.length > 0
-                  ? t("day_filter.empty_day_desc")
-                  : undefined
-              }
-            />
-          </div>
+          )}
+
+          <DailyStats selectedDayKey={selectedDayKey} selectedTypeKey={selectedTypeKey} />
+          <WorkLogTable
+            entries={filteredRecords}
+            onEdit={handleEditEntry}
+            hourlyRate={hourlyRate}
+            showDayRows={selectedDayKey === ALL_DAYS_KEY}
+            emptyTitle={
+              selectedDayKey !== ALL_DAYS_KEY && records.length > 0
+                ? t("day_filter.empty_day_title")
+                : undefined
+            }
+            emptyDescription={
+              selectedDayKey !== ALL_DAYS_KEY && records.length > 0
+                ? t("day_filter.empty_day_desc")
+                : undefined
+            }
+          />
         </div>
       </main>
 

@@ -34,6 +34,8 @@
     "description": "Track and review all your logged work sessions.",
     "export": "Export",
     "sync_sheets": "Sync Sheets",
+    "toggle_filters": "Filters",
+    "toggle_filters_aria": "Toggle filters",
     "rate_suffix": "/hr",
     "rate_aria": "Hourly rate",
     "footer_made_by": "Made by",

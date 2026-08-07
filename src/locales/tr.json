@@ -34,6 +34,8 @@
     "description": "Kaydedilmiş tüm çalışma oturumlarınızı takip edin ve inceleyin.",
     "export": "Dışa Aktar",
     "sync_sheets": "E-Tablolar ile Eşitle",
+    "toggle_filters": "Filtreler",
+    "toggle_filters_aria": "Filtreleri aç/kapat",
     "rate_suffix": "/sa",
     "rate_aria": "Saatlik ücret",
     "footer_made_by": "Geliştirici:",
